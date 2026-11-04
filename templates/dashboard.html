@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Resumen · GameConsole{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div>
+    <span class="eyebrow">Centro de juego</span>
+    <h1>¿Qué quieres jugar hoy?</h1>
+    <p>Inicia una partida o continúa una sesión activa. Cada instancia conserva su progreso y sus eventos por separado.</p>
+  </div>
+  <button class="primary-button" type="button" data-scroll-to="game-library"><span>＋</span> Nueva partida</button>
+</section>
+
+<section class="metrics-strip" aria-label="Resumen de actividad">
+  <article><span>Partidas activas</span><strong>2</strong><small><i class="positive"></i> ejecutándose ahora</small></article>
+  <article><span>Instancias hoy</span><strong>7</strong><small>3 juegos diferentes</small></article>
+  <article><span>Tiempo de juego</span><strong>01:42</strong><small>horas acumuladas</small></article>
+  <article><span>Eventos enviados</span><strong>1,284</strong><small><i class="positive"></i> GameStats conectado</small></article>
+</section>
+
+<div class="dashboard-grid">
+  <section class="panel library-panel" id="game-library">
+    <div class="section-heading">
+      <div><span class="eyebrow">Biblioteca</span><h2>Tus juegos</h2></div>
+      <span class="muted">3 disponibles</span>
+    </div>
+
+    <div class="game-grid">
+      {% for id, game in games.items() %}
+      <article class="game-card {{ game.accent }}">
+        <div class="game-visual">
+          <span class="game-number">0{{ loop.index }}</span>
+          <span class="game-symbol" aria-hidden="true">{{ game.icon }}</span>
+          {% if id == 'ajedrez' %}<div class="chess-pattern"></div>{% endif %}
+          {% if id == 'pacman' %}<div class="maze-pattern"><i></i><i></i><i></i></div>{% endif %}
+          {% if id == 'carreras' %}<div class="road-pattern"><i></i></div>{% endif %}
+        </div>
+        <div class="game-body">
+          <span class="game-type">{{ game.eyebrow }}</span>
+          <h3>{{ game.name }}</h3>
+          <p>{{ game.description }}</p>
+          <div class="game-actions">
+            <a class="card-button" href="{{ url_for('game', game_id=id) }}">{{ 'Continuar' if game.status != 'Disponible' else 'Jugar ahora' }} <span>→</span></a>
+            <span class="status-pill {{ game.accent }}">{{ game.status }}</span>
+          </div>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <aside class="panel activity-panel">
+    <div class="section-heading compact"><div><span class="eyebrow">En vivo</span><h2>Actividad</h2></div><span class="live-badge">LIVE</span></div>
+    <div class="activity-list">
+      <button class="activity-item is-selected" type="button" data-session="Ajedrez · AJ-1042">
+        <span class="activity-icon violet">♞</span>
+        <span><strong>Ajedrez</strong><small>Turno del jugador</small></span>
+        <time>08:42</time>
+      </button>
+      <button class="activity-item" type="button" data-session="Pac-Man · PA-2087">
+        <span class="activity-icon amber">●</span>
+        <span><strong>Pac-Man</strong><small>Partida en pausa</small></span>
+        <time>02:40</time>
+      </button>
+    </div>
+    <div class="event-preview">
+      <div><span>Último evento</span><code>PLAYER_ACTION</code></div>
+      <p id="focused-session">Ajedrez · AJ-1042</p>
+      <small>Recibido hace 3 segundos</small>
+    </div>
+    <button class="secondary-button full-width" type="button" data-toast="El historial se habilitará al conectar GameStats.">Ver toda la actividad</button>
+  </aside>
+</div>
+{% endblock %}

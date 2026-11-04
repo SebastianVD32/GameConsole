@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Página no encontrada · GameConsole{% endblock %}
+{% block content %}
+<section class="empty-state panel">
+  <span class="eyebrow">Error 404</span>
+  <h1>Esta pantalla no existe</h1>
+  <p>La ruta solicitada no pertenece a ninguna partida o sección de la consola.</p>
+  <a class="primary-button" href="{{ url_for('dashboard') }}">Volver al resumen</a>
+</section>
+{% endblock %}
