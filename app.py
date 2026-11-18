@@ -1,7 +1,9 @@
 from flask import Flask, abort, render_template
+from gamestats import stats
 
 
 app = Flask(__name__)
+app.register_blueprint(stats)
 
 
 GAMES = {
@@ -22,7 +24,7 @@ GAMES = {
         "description": "Recorre el laberinto, supera tu puntuación y evita a los fantasmas.",
         "icon": "●",
         "accent": "amber",
-        "status": "En pausa",
+        "status": "Disponible",
         "session": "PA-2087",
     },
     "carreras": {
@@ -49,7 +51,7 @@ def game(game_id: str):
     if selected_game is None:
         abort(404)
     return render_template(
-        "game.html",
+        "pacman.html" if game_id == "pacman" else "game.html",
         game=selected_game,
         game_id=game_id,
         games=GAMES,
