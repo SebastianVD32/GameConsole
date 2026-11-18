@@ -40,15 +40,6 @@
       </div>
       <div class="player-bar"><span class="player-avatar">SV</span><span><strong>Tú</strong><small>Selecciona una pieza</small></span><time>08:42</time></div>
     </div>
-    {% elif game_id == 'pacman' %}
-    <div class="maze-game" aria-label="Partida de Pac-Man de demostración">
-      <div class="maze-hud"><span>PUNTOS <strong>4,820</strong></span><span>VIDAS <strong>● ●</strong></span></div>
-      <div class="maze-board">
-        <div class="maze-lines"></div><span class="pac-player">◔</span><span class="ghost one">♟</span><span class="ghost two">♟</span>
-        {% for i in range(34) %}<i class="pellet" style="--i:{{ i }}"></i>{% endfor %}
-      </div>
-      <p class="control-hint"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> para moverte</p>
-    </div>
     {% else %}
     <div class="race-game" aria-label="Juego de carreras de demostración">
       <div class="race-hud"><span><small>VELOCIDAD</small><strong>185</strong> km/h</span><span><small>VUELTA</small><strong>2 / 3</strong></span></div>

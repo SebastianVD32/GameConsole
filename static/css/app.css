@@ -258,3 +258,37 @@ code { color: var(--cyan); font: 9px "DM Mono"; }.event-preview p { margin: 12px
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
+
+/* Pac-Man shares the console palette, panels and type scale. */
+.pacman-layout { grid-template-columns: minmax(0, 1fr) 310px; }
+.pacman-game { width: min(660px, 100%); margin: auto; padding: 24px; }
+.pacman-hud { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 18px; color: var(--muted); font: 10px "DM Mono", monospace; letter-spacing: .08em; }
+.pacman-hud strong { display: block; margin-top: 6px; font-size: 23px; color: var(--amber); letter-spacing: -.04em; }
+.pacman-board-wrap { position: relative; overflow: hidden; border: 1px solid #4c4278; border-radius: 14px; box-shadow: 0 0 40px #9c87ff0c; }
+#pacman-board { display: block; width: 100%; height: auto; aspect-ratio: 1; outline-offset: -3px; }
+button:focus-visible, a:focus-visible, #pacman-board:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+button:disabled { opacity: .4; cursor: default; }
+.pacman-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; background: rgba(7, 12, 21, .86); text-align: center; }
+.pacman-overlay[hidden] { display: none; }
+.pacman-overlay h2 { margin: 10px 0; font-size: clamp(19px, 2.5vw, 30px); letter-spacing: -.035em; }
+.pacman-overlay p { max-width: 320px; margin: 0 0 22px; font-size: 12px; line-height: 1.7; color: #a4b2c4; }
+.pacman-overlay .primary-button { background: var(--amber); color: #241b09; }
+.power-meter { margin-top: 16px; color: #a7a4b6; font: 10px "DM Mono", monospace; }
+.power-meter progress { display: block; width: 100%; height: 5px; margin-top: 9px; accent-color: var(--amber); border: 0; border-radius: 4px; overflow: hidden; }
+.power-meter progress::-webkit-progress-bar { background: #202a3c; }
+.power-meter progress::-webkit-progress-value { background: var(--amber); }
+.pacman-game .control-hint { text-align: center; line-height: 2.5; }
+.pacman-rules { text-align: center; color: var(--muted); font-size: 10px; line-height: 1.8; }
+.pacman-rules b { color: var(--amber); font-weight: 500; }
+.direction-pad { display: grid; grid-template-columns: repeat(3, 42px); justify-content: center; gap: 6px; margin: 12px 0; }
+.direction-pad button { height: 38px; border: 1px solid #334156; border-radius: 8px; background: #151e2a; color: var(--amber); cursor: pointer; font-size: 20px; touch-action: manipulation; }
+.direction-pad button:hover, .direction-pad button:active { border-color: var(--amber); background: #302a1d; }
+.direction-pad button:first-child { grid-column: 2; }
+.direction-pad button:nth-child(2) { grid-column: 1; }
+.pacman-stats { margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--line-soft); }
+.pacman-stats h2 { font-size: 17px; }
+.stats-explanation { margin-top: 14px; }
+#delivery-status { overflow-wrap: anywhere; }
+@media (max-width: 1100px) { .pacman-layout { grid-template-columns: minmax(0, 1fr) 270px; gap: 14px; } .pacman-game { padding: 16px; } }
+@media (max-width: 960px) { .pacman-layout { grid-template-columns: 1fr; } .pacman-layout .play-stage { min-height: auto; } }
+@media (max-width: 400px) { .pacman-game { padding: 10px; } .pacman-hud { font-size: 8px; } .pacman-overlay p { font-size: 11px; margin-bottom: 12px; } }
