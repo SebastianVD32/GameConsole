@@ -1,9 +1,9 @@
 (function (root) {
   'use strict';
   class EventDelivery {
-    constructor({ storage, fetcher = (...args) => fetch(...args), onChange = () => {}, schedule = setTimeout } = {}) {
+    constructor({ storage, storageKey = 'gameconsole.pacman.pending.v1', fetcher = (...args) => fetch(...args), onChange = () => {}, schedule = (callback, delay) => globalThis.setTimeout(callback, delay) } = {}) {
       Object.assign(this, { storage, fetcher, onChange, schedule });
-      this.key = 'gameconsole.pacman.pending.v1'; this.queue = []; this.busy = new Set(); this.blocked = new Set();
+      this.key = storageKey; this.queue = []; this.busy = new Set(); this.blocked = new Set();
       this.sent = 0; this.error = ''; this.persistent = Boolean(storage);
       try { this.queue = JSON.parse(storage?.getItem(this.key) || '[]'); if (!Array.isArray(this.queue)) this.queue = []; }
       catch { this.persistent = false; }

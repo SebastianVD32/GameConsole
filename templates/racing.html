@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Carreras · GameConsole{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('web.dashboard') }}">Consola</a> / <span>Juegos</span> / Carreras{% endblock %}
+{% block content %}
+<section class="game-header">
+  <div><span class="eyebrow">Circuito Neón · 4 pilotos · 3 vueltas</span><h1>Juego de carreras</h1></div>
+  <div class="game-header-actions">
+    <span class="status-pill cyan" id="race-status" role="status">En parrilla</span>
+    <button class="secondary-button" id="race-pause" type="button" disabled>Ⅱ Pausar</button>
+    <button class="danger-button" id="race-restart" type="button" title="Prepara una nueva carrera. Una carrera interrumpida no tendrá clasificación final.">↻ Nueva carrera</button>
+  </div>
+</section>
+<div class="play-layout racing-layout">
+  <section class="play-stage panel cyan-stage">
+    <div class="stage-toolbar"><span><i class="live-dot"></i> <span id="race-match">Nueva instancia</span></span><span>Control local · Sin Prolog</span></div>
+    <div class="circuit-game">
+      <div class="circuit-hud">
+        <div><span>VELOCIDAD</span><strong id="race-speed">0</strong><small>km/h</small></div>
+        <div><span>VUELTA</span><strong id="race-lap">1 <small>/ 3</small></strong></div>
+        <div><span>POSICIÓN</span><strong id="race-position">1 <small>/ 4</small></strong></div>
+        <div><span>TIEMPO</span><strong id="race-clock">00:00.0</strong></div>
+      </div>
+      <div class="circuit-board-wrap">
+        <canvas id="racing-board" width="900" height="620" tabindex="0" aria-label="Circuito de carreras. Tu automóvil es cian. Usa arriba para acelerar, abajo para frenar e izquierda y derecha para desplazarte entre los bordes de la pista." aria-describedby="race-help">Tu navegador necesita admitir Canvas para jugar.</canvas>
+        <div class="circuit-overlay" id="race-overlay">
+          <span class="eyebrow" id="race-overlay-eyebrow">GameConsole Motorsport</span>
+          <h2 id="race-overlay-title">Tu lugar en la parrilla</h2>
+          <p id="race-overlay-description">Domina las curvas, adelanta a tus rivales y completa tres vueltas. Tu automóvil es el cian.</p>
+          <button class="primary-button" id="race-start" type="button">Encender motores →</button>
+        </div>
+      </div>
+      <div class="circuit-feedback"><span id="race-feedback" role="status">Mantén ↑ o W para acelerar.</span><span id="race-progress-label">0 % de carrera</span></div>
+      <progress class="circuit-progress" id="race-progress" max="100" value="0" aria-label="Progreso de la carrera"></progress>
+      <p class="control-hint" id="race-help"><kbd>↑</kbd> acelerar · <kbd>↓</kbd> frenar · <kbd>←</kbd><kbd>→</kbd> desplazarte · <kbd>P</kbd> pausa<br>También puedes usar WASD. La dirección sigue el circuito; tú eliges el carril.</p>
+      <div class="race-touch-controls" aria-label="Controles de conducción">
+        <div><button type="button" data-drive="left" aria-label="Desplazarte a la izquierda de la pista">←</button><button type="button" data-drive="right" aria-label="Desplazarte a la derecha de la pista">→</button></div>
+        <div><button type="button" data-drive="brake" class="brake-control">Frenar</button><button type="button" data-drive="throttle" class="throttle-control">Acelerar</button></div>
+      </div>
+      <p class="circuit-tip">Mantén pulsados los controles. El césped y los contactos te frenan; reduce la velocidad antes de las curvas.</p>
+    </div>
+  </section>
+  <aside class="telemetry panel">
+    <div class="section-heading compact"><div><span class="eyebrow">Esta instancia</span><h2>Clasificación en pista</h2></div><span class="live-badge">LOCAL</span></div>
+    <ol class="race-standings" id="race-standings" aria-label="Posiciones actuales"></ol>
+    <div class="telemetry-grid">
+      <article><span>Vuelta actual</span><strong id="race-lap-time">00:00.0</strong><small>sin pausas</small></article>
+      <article><span>Última vuelta</span><strong id="race-last-lap">—</strong><small>cruce de meta</small></article>
+    </div>
+    <div class="event-stream"><div class="stream-heading"><strong>Eventos recientes</strong><span id="race-event-count">0 eventos</span></div><ol id="race-events"></ol></div>
+    <button class="secondary-button full-width" id="race-export" type="button" disabled>↓ Descargar eventos JSONL</button>
+    <div class="race-analytics">
+      <div class="section-heading compact"><div><span class="eyebrow">GameStats</span><h2>Resultado oficial</h2></div><span class="live-badge" id="race-sync">LISTO</span></div>
+      <p class="telemetry-note" id="race-delivery" role="status">Sin eventos pendientes.</p>
+      <div class="telemetry-grid">
+        <article><span>Tu mejor vuelta</span><strong id="race-best-official">—</strong><small>calculada por Scala</small></article>
+        <article><span>Tu posición final</span><strong id="race-position-official">—</strong><small>calculada por Scala</small></article>
+      </div>
+      <p class="telemetry-note stats-explanation" id="race-analytics-status">GameStats procesa el resultado cuando todos completan las tres vueltas.</p>
+      <button class="secondary-button full-width" id="race-retry" type="button">↻ Reintentar conexión</button>
+    </div>
+  </aside>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/racing-engine.js') }}"></script>
+<script src="{{ url_for('static', filename='js/gamestats.js') }}"></script>
+<script src="{{ url_for('static', filename='js/racing.js') }}"></script>
+{% endblock %}

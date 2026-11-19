@@ -33,7 +33,7 @@ class Settings:
     @classmethod
     def from_env(cls) -> "Settings":
         return cls(
-            ingest_url=os.environ.get("GAMESTATS_INGEST_URL", "http://localhost:8080"),
+            ingest_url=os.environ.get("GAMESTATS_INGEST_URL", os.environ.get("GAMESTATS_INGESTION_URL", "http://localhost:8080")),
             analytics_url=os.environ.get("GAMESTATS_ANALYTICS_URL", "http://localhost:8081"),
             ai_workers=int(os.environ.get("GAMECONSOLE_AI_WORKERS", "4")),
             send_workers=int(os.environ.get("GAMECONSOLE_SEND_WORKERS", "8")),

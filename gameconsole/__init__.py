@@ -14,12 +14,12 @@ def create_app(services: ConsoleServices | None = None, settings: Settings | Non
     app = Flask(__name__, static_folder="../static", template_folder="../templates")
     app.extensions["console"] = services or ConsoleServices.build(settings or Settings.from_env())
 
-    from gamestats import stats as pacman_bridge  # puente de Pac-Man (navegador → GameStats)
+    from gamestats import stats as arcade_bridge  # Pac-Man y carreras (navegador → GameStats)
 
     from .api import api
     from .web import web
 
     app.register_blueprint(web)
-    app.register_blueprint(pacman_bridge)
+    app.register_blueprint(arcade_bridge)
     app.register_blueprint(api, url_prefix="/api")
     return app

@@ -21,7 +21,7 @@ def free_port():
         return sock.getsockname()[1]
 
 
-def main():
+def main(test_file="tests/gamestats.integration.cjs", game_path="/juegos/pacman"):
     root = Path(__file__).resolve().parents[1]
     source = Path(sys.argv[1]).resolve() / "go-ingestion"
     if not (source / "go.mod").is_file():
@@ -30,10 +30,11 @@ def main():
     while ingestion_port == console_port:
         console_port = free_port()
     env = dict(os.environ, GAMESTATS_INGESTION_URL=f"http://127.0.0.1:{ingestion_port}",
+               GAMESTATS_INGEST_URL=f"http://127.0.0.1:{ingestion_port}",
                CONSOLE_URL=f"http://127.0.0.1:{console_port}")
     processes = []
     flags = {"creationflags": subprocess.CREATE_NO_WINDOW} if os.name == "nt" else {}
-    with tempfile.TemporaryDirectory(prefix="pacman-integration-") as tmp:
+    with tempfile.TemporaryDirectory(prefix="gameconsole-integration-") as tmp:
         with open(Path(tmp) / "services.log", "w+", encoding="utf-8") as log:
             try:
                 binary = Path(tmp) / ("gamestats.exe" if os.name == "nt" else "gamestats")
@@ -45,7 +46,7 @@ def main():
                 ]
                 for cmd in commands:
                     processes.append(subprocess.Popen(cmd, cwd=root, env=env, stdout=log, stderr=log, **flags))
-                for url in [env["GAMESTATS_INGESTION_URL"] + "/healthz", env["CONSOLE_URL"] + "/juegos/pacman"]:
+                for url in [env["GAMESTATS_INGESTION_URL"] + "/healthz", env["CONSOLE_URL"] + game_path]:
                     deadline = time.monotonic() + 30
                     while True:
                         try:
@@ -57,7 +58,7 @@ def main():
                         if any(p.poll() is not None for p in processes) or time.monotonic() > deadline:
                             raise RuntimeError(f"No se pudo iniciar {url}")
                         time.sleep(0.2)
-                result = subprocess.run([shutil.which("node"), "tests/gamestats.integration.cjs"], cwd=root, env=env,
+                result = subprocess.run([shutil.which("node"), test_file], cwd=root, env=env,
                                         capture_output=True, text=True, encoding="utf-8", **flags)
                 print(result.stdout)
                 if result.stderr:

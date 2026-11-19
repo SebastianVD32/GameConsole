@@ -27,12 +27,12 @@ GAMES = {
         "name": "Juego de carreras",
         "short_name": "Carreras",
         "game_id": "RACING",
-        "eyebrow": "Contrarreloj",
-        "description": "Completa el circuito y mejora tus tiempos vuelta tras vuelta.",
+        "eyebrow": "Carrera de circuito",
+        "description": "Compite contra tres rivales, domina las curvas y conquista el podio.",
         "icon": "↗",
         "accent": "cyan",
-        "status": "En desarrollo",
-        "playable": False,
+        "status": "Disponible",
+        "playable": True,
     },
 }
 

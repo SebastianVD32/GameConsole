@@ -1,15 +1,17 @@
 import io
 import json
+import os
 import unittest
 from unittest.mock import patch
 from urllib.error import HTTPError, URLError
 
-from app import app
+from tests.test_app import make_client
+from gameconsole.services import Settings
 
 
 class GameStatsBridgeTest(unittest.TestCase):
     def setUp(self):
-        self.client = app.test_client()
+        self.client, _ = make_client()
 
     def test_pacman_loads_real_controls_and_its_modules_only_on_its_page(self):
         html = self.client.get('/juegos/pacman').get_data(as_text=True)
@@ -52,6 +54,42 @@ class GameStatsBridgeTest(unittest.TestCase):
     def test_invalid_payload_is_rejected(self):
         self.assertEqual(self.client.post('/api/gamestats/events', json=[]).status_code, 400)
         self.assertEqual(self.client.post('/api/gamestats/events', json={'gameId': 'CHESS'}).status_code, 400)
+
+    def test_racing_loads_its_own_canvas_and_modules(self):
+        html = self.client.get('/juegos/carreras').get_data(as_text=True)
+        self.assertIn('id="racing-board"', html)
+        self.assertIn('js/racing-engine.js', html)
+        self.assertNotIn('de demostración', html)
+        self.assertNotIn('js/pacman-engine.js', html)
+
+    @patch('gamestats.urlopen')
+    def test_racing_events_share_the_bridge_without_changing_the_envelope(self, urlopen):
+        event = dict(gameId='RACING', type='MATCH_STARTED', data={'driverIds': ['p', 'ai'], 'plannedLaps': 3})
+        urlopen.return_value.__enter__.return_value = io.StringIO('{"accepted":true}')
+        urlopen.return_value.__enter__.return_value.status = 201
+        self.assertEqual(self.client.post('/api/gamestats/events', json=event).status_code, 201)
+        self.assertEqual(json.loads(urlopen.call_args.args[0].data), event)
+
+    @patch('gamestats.urlopen')
+    def test_race_result_is_queried_from_scala_without_recalculating_it(self, urlopen):
+        data = {'gameId': 'RACING', 'matchId': 'race-one', 'drivers': [{'playerId': 'p', 'bestLapTimeMs': 32100, 'finalPosition': 2}]}
+        urlopen.return_value.__enter__.return_value = io.StringIO(json.dumps(data))
+        urlopen.return_value.__enter__.return_value.status = 200
+        self.assertEqual(self.client.get('/api/gamestats/matches/race-one').json, data)
+        self.assertTrue(urlopen.call_args.args[0].full_url.endswith('/api/v1/matches/race-one'))
+
+    @patch.dict(os.environ, {'GAMESTATS_INGEST_URL': 'http://shared-ingestion:18080', 'GAMESTATS_INGESTION_URL': 'http://legacy:8080'})
+    @patch('gamestats.urlopen')
+    def test_arcade_bridge_and_chess_use_the_same_configured_ingestion(self, urlopen):
+        urlopen.return_value.__enter__.return_value = io.StringIO('{"accepted":true}')
+        urlopen.return_value.__enter__.return_value.status = 201
+        self.client.post('/api/gamestats/events', json={'gameId': 'RACING'})
+        self.assertEqual(urlopen.call_args.args[0].full_url, 'http://shared-ingestion:18080/api/v1/events')
+        self.assertEqual(Settings.from_env().ingest_url, 'http://shared-ingestion:18080')
+
+    @patch.dict(os.environ, {'GAMESTATS_INGESTION_URL': 'http://legacy-ingestion:18080'}, clear=True)
+    def test_legacy_arcade_ingestion_setting_is_preserved(self):
+        self.assertEqual(Settings.from_env().ingest_url, 'http://legacy-ingestion:18080')
 
 
 if __name__ == '__main__':

@@ -359,3 +359,58 @@ button:disabled { opacity: .4; cursor: default; }
 @media (max-width: 1100px) { .pacman-layout { grid-template-columns: minmax(0, 1fr) 270px; gap: 14px; } .pacman-game { padding: 16px; } }
 @media (max-width: 960px) { .pacman-layout { grid-template-columns: 1fr; } .pacman-layout .play-stage { min-height: auto; } }
 @media (max-width: 400px) { .pacman-game { padding: 10px; } .pacman-hud { font-size: 8px; } .pacman-overlay p { font-size: 11px; margin-bottom: 12px; } }
+
+/* Circuit racing keeps the shared console shell and cyan game accent. */
+.racing-layout { grid-template-columns: minmax(0, 1fr) 300px; }
+.racing-layout .play-stage { min-height: auto; }
+.circuit-game { padding: 24px; }
+.circuit-hud { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0 0 22px; }
+.circuit-hud > div { min-width: 0; border-right: 1px solid var(--line-soft); padding-right: 8px; }
+.circuit-hud > div:last-child { border: 0; padding: 0; }
+.circuit-hud span { display: block; margin-bottom: 8px; color: var(--muted); font: 9px "DM Mono", monospace; letter-spacing: .08em; }
+.circuit-hud strong { font: 500 clamp(15px, 2vw, 29px) "DM Mono", monospace; color: var(--cyan); white-space: nowrap; }
+.circuit-hud small { margin-left: 4px; color: #728b9a; font: 10px "DM Mono", monospace; }
+.circuit-board-wrap { position: relative; overflow: hidden; border: 1px solid #24505a; border-radius: 13px; background: #0a191c; }
+#racing-board { display: block; width: 100%; height: auto; aspect-ratio: 900 / 620; }
+#racing-board:focus-visible { outline: 2px solid var(--cyan); outline-offset: -3px; }
+.circuit-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 20px; text-align: center; background: #071117e8; }
+.circuit-overlay[hidden], #race-start[hidden] { display: none; }
+.circuit-overlay h2 { margin: 12px 0; font-size: clamp(21px, 2.6vw, 34px); letter-spacing: -.04em; }
+.circuit-overlay p { max-width: 360px; margin: 0 0 24px; color: #a0b3bf; font-size: 12px; line-height: 1.7; }
+.circuit-overlay.is-countdown { background: #07111766; pointer-events: none; }
+.circuit-overlay.is-countdown .eyebrow { visibility: hidden; }
+.circuit-overlay.is-countdown h2 { font: 500 80px "DM Mono", monospace; color: var(--cyan); text-shadow: 0 0 40px #42d8ef55; }
+.circuit-overlay.is-countdown p { padding: 8px; border-radius: 5px; background: #071117cc; }
+.circuit-feedback { display: flex; align-items: start; justify-content: space-between; gap: 12px; margin-top: 15px; color: #9cb0bd; font-size: 10px; line-height: 1.5; min-height: 30px; }
+.circuit-feedback > span:last-child { white-space: nowrap; color: var(--cyan); font: 9px "DM Mono", monospace; }
+.circuit-progress { display: block; width: 100%; height: 4px; border: 0; border-radius: 4px; overflow: hidden; accent-color: var(--cyan); }
+.circuit-progress::-webkit-progress-bar { background: #1d2f3b; }
+.circuit-progress::-webkit-progress-value { background: var(--cyan); }
+.circuit-game .control-hint { margin-top: 15px; text-align: center; line-height: 2.1; }
+.race-touch-controls { display: flex; justify-content: space-between; gap: 12px; margin-top: 15px; }
+.race-touch-controls > div { display: flex; gap: 8px; }
+.race-touch-controls button { min-width: 48px; min-height: 45px; padding: 8px 15px; border: 1px solid #334a58; border-radius: 9px; background: #14232d; color: #bad4de; cursor: pointer; touch-action: none; user-select: none; }
+.race-touch-controls .throttle-control { color: var(--cyan); border-color: #26717b; background: #103139; }
+.race-touch-controls button.is-held { color: #05151d; background: var(--cyan); border-color: var(--cyan); box-shadow: 0 0 18px #42d8ef30; }
+.race-touch-controls .brake-control.is-held { background: var(--amber); border-color: var(--amber); }
+.circuit-tip { color: #758c9a; font-size: 10px; line-height: 1.6; margin: 14px 0 0; text-align: center; }
+.race-standings { list-style: none; padding: 0; margin: 0 0 20px; display: grid; gap: 6px; }
+.race-standings li { display: grid; grid-template-columns: 20px 7px 1fr auto; gap: 10px; align-items: center; padding: 12px 10px; border: 1px solid transparent; border-radius: 9px; background: #0c141e; font-size: 11px; }
+.race-standings li.is-player { border-color: #42d8ef44; background: #42d8ef0a; }
+.race-standings strong { color: #aec4cf; font: 12px "DM Mono", monospace; }
+.race-standings i { width: 6px; height: 15px; border-radius: 3px; }
+.race-standings small { color: #718b9c; font: 9px "DM Mono", monospace; }
+.race-analytics { margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--line-soft); }
+.race-analytics h2 { font-size: 17px; }
+#race-delivery { overflow-wrap: anywhere; }
+@media (max-width: 1180px) { .racing-layout { grid-template-columns: minmax(0, 1fr) 260px; gap: 14px; } .circuit-game { padding: 16px; } }
+@media (max-width: 960px) { .racing-layout { grid-template-columns: 1fr; } .circuit-hud strong { font-size: 26px; } }
+@media (max-width: 560px) {
+  .circuit-game { padding: 12px; } .circuit-hud { gap: 6px; margin-bottom: 15px; } .circuit-hud strong { font-size: 17px; }
+  .circuit-hud small { display: block; margin: 4px 0 0; font-size: 9px; } .circuit-hud span { font-size: 8px; }
+  .circuit-overlay { padding: 12px; } .circuit-overlay h2 { font-size: 20px; margin: 6px 0; }
+  .circuit-overlay p { font-size: 10px; margin-bottom: 12px; line-height: 1.5; } .circuit-overlay .eyebrow { font-size: 8px; }
+  .circuit-overlay.is-countdown h2 { font-size: 48px; } .circuit-overlay.is-countdown p { display: none; }
+  .race-touch-controls { gap: 8px; } .race-touch-controls button { min-width: 43px; padding: 8px 10px; font-size: 12px; }
+  .race-touch-controls > div { gap: 5px; }
+}
