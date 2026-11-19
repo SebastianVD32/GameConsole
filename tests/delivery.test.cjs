@@ -38,3 +38,27 @@ test('storage failure keeps events in memory and pending queue survives reload',
   const d = new EventDelivery({ storage: { getItem: () => JSON.stringify([event('old', 'a', 1)]), setItem: () => { throw Error(); } }, fetcher: offline, schedule: () => {} });
   d.flush(); await settle(); assert.equal(d.queue[0].eventId, 'old'); assert.equal(d.persistent, false);
 });
+
+test('browser retry invokes the timer with its window context', async () => {
+  const vm = require('node:vm');
+  const fs = require('node:fs');
+  let scheduled = false;
+  const context = vm.createContext({ browserWindow: true, AbortSignal,
+    fetch: async () => response(503, {}),
+    setTimeout(callback, delay) { assert.equal(this.browserWindow, true); assert.equal(delay, 5000); scheduled = true; },
+  });
+  vm.runInContext(fs.readFileSync(require.resolve('../static/js/gamestats'), 'utf8'), context);
+  vm.runInContext("new GameStats.EventDelivery().enqueue({eventId:'one',matchId:'race',sequence:1})", context);
+  await settle(); assert.equal(scheduled, true);
+});
+
+test('Pac-Man and racing persist to separate queues', async () => {
+  const saved = new Map(), storage = { getItem: k => saved.get(k), setItem: (k, v) => saved.set(k, v) };
+  const options = { storage, fetcher: async () => response(503, {}), schedule: () => {} };
+  const pacman = new EventDelivery(options);
+  const racing = new EventDelivery({ ...options, storageKey: 'gameconsole.racing.pending.v1' });
+  pacman.enqueue(event('pac', 'pacman', 1)); racing.enqueue(event('race', 'racing', 1)); await settle();
+  assert.notEqual(pacman.key, racing.key);
+  assert.equal(JSON.parse(saved.get(pacman.key))[0].eventId, 'pac');
+  assert.equal(JSON.parse(saved.get(racing.key))[0].eventId, 'race');
+});

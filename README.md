@@ -1,6 +1,6 @@
 # GameConsole
 
-Consola web en Python/Flask. Pac-Man es jugable y genera los eventos del contrato real de GameStats. Ajedrez y carreras conservan sus pantallas de demostración; se desarrollarán por separado.
+Consola web en Python/Flask con Pac-Man y carreras jugables, ambos con eventos compatibles con el contrato real de GameStats y sin Prolog. Ajedrez conserva su pantalla de demostración.
 
 ## Ejecutar localmente
 
@@ -11,7 +11,29 @@ pip install -r requirements.txt
 python app.py
 ```
 
-Abre `http://127.0.0.1:5000/juegos/pacman`. Requiere Python 3.12+ y un navegador moderno con Canvas. Node solo se necesita para ejecutar las pruebas.
+Abre `http://127.0.0.1:5000` y elige un juego. También puedes entrar directamente a `/juegos/pacman` o `/juegos/carreras`. Requiere Python 3.12+ y un navegador moderno con Canvas. Node solo se necesita para ejecutar las pruebas.
+
+Si no activaste el entorno virtual, inicia con `.\.venv\Scripts\python.exe app.py` desde la carpeta del repositorio. Mantén abierta la terminal y usa **http**, sin https. El Python global puede no tener Flask instalado.
+
+## Carreras
+
+**Circuito Neón** es una carrera arcade de tres vueltas en un circuito de 1500 metros contra Vector, Apex y Turbo. El auto del jugador es cian. La salida tiene una cuenta regresiva de tres segundos; cada rival controla su aceleración, frenado y carril mediante reglas JavaScript, sin conexión con Prolog.
+
+- Mantén **↑ / W** para acelerar y **↓ / S** para frenar. **← / A** y **→ / D** desplazan el auto hacia su izquierda o derecha dentro del circuito, tomando como referencia la orientación del automóvil. El auto sigue la trayectoria del circuito; no es un simulador de dirección libre.
+- **P** o el botón superior pausa y continúa. Los controles en pantalla admiten pulsación sostenida y varios dedos, de modo que puedes acelerar y girar al mismo tiempo.
+- Las curvas cerradas producen deriva al exceder la velocidad segura. El césped reduce la velocidad, y los contactos frenan a ambos autos durante un breve intervalo. Se puede regresar a la pista incluso desde velocidad cero. No hay atajos que salten vueltas.
+- El cronómetro excluye las pausas. Cada cruce de meta registra una vuelta, su tiempo entero en milisegundos y el puesto de cruce de esa vuelta. El juego termina cuando los cuatro autos completan las tres vueltas; si llegas primero, los rivales continúan hasta cerrar la clasificación.
+- El orden final usa la suma de los tiempos de vuelta y desempata por el puesto de la última vuelta, igual que GameStats cuando no existen sanciones. Esta clasificación es parte de las reglas del juego. El bloque **Resultado oficial** consulta los datos procesados por Scala, incluyendo tu mejor vuelta y posición final.
+- **Nueva carrera** interrumpe la actual y prepara otra instancia con identificador nuevo. Una carrera interrumpida conserva solo eventos parciales: el contrato RACING exige que todos completen sus vueltas y no admite un evento de abandono, por lo que no se inventan vueltas ni se envía una clasificación inválida. Descarga los eventos antes de reiniciar si necesitas conservar el registro parcial.
+- Al perder el foco de la ventana u ocultar la pestaña se pausa la carrera y se liberan los controles para evitar aceleración sostenida involuntaria. Cada pestaña conserva su estado independiente; el estado de conducción no se recupera tras recargar.
+
+### Clases y eventos de carreras
+
+`static/js/racing-engine.js` contiene `Circuit` (trayectoria cerrada interpolada y geometría), `RaceCar` (velocidad, desplazamiento y tiempos), `RivalDriver` (conducción y adelantamientos) y `RacingGame` (salida, vueltas, contactos, pausa y clasificación). La física avanza en subpasos de hasta 1/120 de segundo. `static/js/racing.js` contiene `CircuitRenderer` y `RacingController`, responsables del dibujo, teclado, controles táctiles y presentación.
+
+El juego emite `MATCH_STARTED`, `LAP_COMPLETED` para cada uno de los cuatro pilotos y `MATCH_FINISHED`: una carrera completa de tres vueltas produce 14 eventos. Se utiliza `gameId: RACING`, `gameVersion: 1.0`, UUID por partida y evento, secuencias continuas y timestamps UTC que no retroceden. No se implementaron boxes ni sanciones; los contactos y salidas de pista afectan físicamente al tiempo de vuelta.
+
+La cola de carreras usa `gameconsole.racing.pending.v1` y la de Pac-Man conserva su clave anterior, evitando mezclar pendientes al navegar entre ambos. El bloque oficial consulta `GET /api/v1/matches/{matchId}` de Scala a través de Flask cada cinco segundos después del final, hasta recibir el resultado. Si GameStats está desconectado, la conducción sigue disponible y los eventos quedan pendientes.
 
 ## Pac-Man
 
@@ -47,7 +69,7 @@ $env:GAMESTATS_ANALYTICS_URL = 'http://127.0.0.1:8081'
 python app.py
 ```
 
-Son URLs base de servicios controlados por el equipo, sin `/api/v1`. Flask reenvía los eventos a `POST /api/v1/events` y consulta `GET /api/v1/pacman/players/{playerId}`. La comunicación desde el navegador pasa por Flask, por lo que no requiere habilitar CORS en GameStats. Los timeouts de red y las solicitudes asíncronas evitan bloquear el juego.
+Son URLs base de servicios controlados por el equipo, sin `/api/v1`. Flask reenvía los eventos a `POST /api/v1/events`, consulta `GET /api/v1/pacman/players/{playerId}` para el historial de Pac-Man y `GET /api/v1/matches/{matchId}` para el resultado de una carrera. La comunicación desde el navegador pasa por Flask, por lo que no requiere habilitar CORS en GameStats. Los timeouts de red y las solicitudes asíncronas evitan bloquear el juego.
 
 ### Eventos y fallos
 
@@ -71,10 +93,10 @@ La versión consultada de GameStats persiste y analiza partidas al recibir `MATC
 
 ```powershell
 python -m unittest discover -s tests -v
-node --test tests/pacman.test.cjs tests/delivery.test.cjs
+node --test tests/pacman.test.cjs tests/racing.test.cjs tests/delivery.test.cjs
 ```
 
-Las pruebas de Node 22+ usan el motor real y verifican alcanzabilidad, movimiento, pausa, poderes, puntuación, victoria, derrota, aislamiento y reintentos. Las pruebas Python cubren rutas, reenvío HTTP, consulta de estadísticas y fallos. El workflow existente ejecuta ambas suites.
+Las pruebas de Node 22+ usan los motores reales y verifican reglas, pausas, victoria, derrota, física, cruces de meta, clasificación, aislamiento y reintentos. Las pruebas Python cubren rutas, reenvío HTTP, consulta de estadísticas y fallos. El workflow existente ejecuta ambas suites.
 
 Para comprobar el contrato contra el **servicio Go real**, con Go 1.24+, Node 22+ y el repositorio GameStats disponible:
 
@@ -84,6 +106,21 @@ python scripts/verify_pacman_integration.py ../GameStats
 
 El script levanta Go y Flask en puertos temporales, envía dos partidas concurrentes (una victoria y otra con captura de cuatro fantasmas y pérdida de tres vidas), comprueba todos los eventos aceptados y detiene sus procesos. Usa archivos temporales; no consulta Scala. Para comprobar también el procesamiento Scala, inicia los servicios completos y ejecuta `node tests/gamestats.integration.cjs`; luego consulta el historial en la interfaz.
 
+Para carreras y una regresión de Pac-Man, con los mismos requisitos:
+
+```powershell
+python scripts/verify_racing_integration.py ../GameStats
+```
+
+Esta verificación envía tres partidas en paralelo: una carrera ganada, otra perdida y una partida de Pac-Man. Go recibe los eventos reales de los motores y se comprueba que su registro coincida. No requiere Docker ni Scala. Para verificar también los tiempos y la clasificación oficial con los servicios completos ya iniciados:
+
+```powershell
+$env:VERIFY_SCALA = '1'
+node tests/racing.integration.cjs
+```
+
+`CONSOLE_URL` y `GAMESTATS_INGESTION_URL` permiten cambiar los endpoints de esas pruebas. La consola debe tener configuradas las URLs de Go y Scala correspondientes. Los escenarios automáticos usan un piloto de prueba que suministra controles al mismo motor; ese piloto no existe en la interfaz del jugador.
+
 ## Alcance pendiente
 
-Carreras y ajedrez siguen como demostraciones. La integración Prolog corresponderá al juego elegido para ello, no a Pac-Man. El resumen global, deployment, Docker y demás entregables generales del proyecto no se completan con esta primera implementación.
+Ajedrez sigue como demostración. La integración Prolog corresponderá a ese juego, no a Pac-Man ni a carreras. El resumen global, deployment, Docker y demás entregables generales del proyecto quedan pendientes. La cola de eventos aún depende del almacenamiento de cada pestaña y las carreras abandonadas no pueden cerrarse con el contrato RACING actual.

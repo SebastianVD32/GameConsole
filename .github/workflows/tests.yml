@@ -52,10 +52,10 @@ jobs:
       - name: Ejecutar pruebas
         run: python -m unittest discover -s tests -v
 
-      - name: Configurar Node para las reglas de Pac-Man
+      - name: Configurar Node para las reglas de los juegos
         uses: actions/setup-node@v4
         with:
           node-version: "22"
 
       - name: Probar reglas y entrega de eventos
-        run: node --test tests/pacman.test.cjs tests/delivery.test.cjs
+        run: node --test tests/pacman.test.cjs tests/racing.test.cjs tests/delivery.test.cjs

@@ -31,11 +31,16 @@ def send_event():
     if request.content_length is not None and request.content_length > 16384:
         return jsonify(message="Evento demasiado grande."), 413
     payload = request.get_json(silent=True)
-    if not isinstance(payload, dict) or payload.get("gameId") != "PACMAN":
-        return jsonify(message="Se requiere un evento JSON de PACMAN."), 400
+    if not isinstance(payload, dict) or payload.get("gameId") not in ("PACMAN", "RACING"):
+        return jsonify(message="Se requiere un evento JSON de PACMAN o RACING."), 400
     return forward("GAMESTATS_INGESTION_URL", "/api/v1/events", payload)
 
 
 @stats.get("/api/gamestats/pacman/players/<player_id>")
 def player_stats(player_id):
     return forward("GAMESTATS_ANALYTICS_URL", "/api/v1/pacman/players/" + quote(player_id, safe=""))
+
+
+@stats.get("/api/gamestats/matches/<match_id>")
+def match_stats(match_id):
+    return forward("GAMESTATS_ANALYTICS_URL", "/api/v1/matches/" + quote(match_id, safe=""))

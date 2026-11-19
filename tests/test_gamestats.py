@@ -53,6 +53,29 @@ class GameStatsBridgeTest(unittest.TestCase):
         self.assertEqual(self.client.post('/api/gamestats/events', json=[]).status_code, 400)
         self.assertEqual(self.client.post('/api/gamestats/events', json={'gameId': 'CHESS'}).status_code, 400)
 
+    def test_racing_loads_its_own_canvas_and_modules(self):
+        html = self.client.get('/juegos/carreras').get_data(as_text=True)
+        self.assertIn('id="racing-board"', html)
+        self.assertIn('js/racing-engine.js', html)
+        self.assertNotIn('de demostración', html)
+        self.assertNotIn('js/pacman-engine.js', html)
+
+    @patch('gamestats.urlopen')
+    def test_racing_events_share_the_bridge_without_changing_the_envelope(self, urlopen):
+        event = dict(gameId='RACING', type='MATCH_STARTED', data={'driverIds': ['p', 'ai'], 'plannedLaps': 3})
+        urlopen.return_value.__enter__.return_value = io.StringIO('{"accepted":true}')
+        urlopen.return_value.__enter__.return_value.status = 201
+        self.assertEqual(self.client.post('/api/gamestats/events', json=event).status_code, 201)
+        self.assertEqual(json.loads(urlopen.call_args.args[0].data), event)
+
+    @patch('gamestats.urlopen')
+    def test_race_result_is_queried_from_scala_without_recalculating_it(self, urlopen):
+        data = {'gameId': 'RACING', 'matchId': 'race-one', 'drivers': [{'playerId': 'p', 'bestLapTimeMs': 32100, 'finalPosition': 2}]}
+        urlopen.return_value.__enter__.return_value = io.StringIO(json.dumps(data))
+        urlopen.return_value.__enter__.return_value.status = 200
+        self.assertEqual(self.client.get('/api/gamestats/matches/race-one').json, data)
+        self.assertTrue(urlopen.call_args.args[0].full_url.endswith('/api/v1/matches/race-one'))
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -30,8 +30,8 @@ GAMES = {
     "carreras": {
         "name": "Juego de carreras",
         "short_name": "Carreras",
-        "eyebrow": "Contrarreloj",
-        "description": "Completa el circuito y mejora tus tiempos vuelta tras vuelta.",
+        "eyebrow": "Carrera de circuito",
+        "description": "Compite contra tres rivales, domina las curvas y conquista el podio.",
         "icon": "↗",
         "accent": "cyan",
         "status": "Disponible",
@@ -51,7 +51,7 @@ def game(game_id: str):
     if selected_game is None:
         abort(404)
     return render_template(
-        "pacman.html" if game_id == "pacman" else "game.html",
+        {"pacman": "pacman.html", "carreras": "racing.html"}.get(game_id, "game.html"),
         game=selected_game,
         game_id=game_id,
         games=GAMES,
