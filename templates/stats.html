@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Estadísticas · GameConsole{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('web.dashboard') }}">Consola</a> / <span>Estadísticas</span>{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div>
+    <span class="eyebrow">Panel de control · datos de GameStats</span>
+    <h1>Estadísticas en tiempo real</h1>
+    <p>Todos los valores se consultan a GameStats: el servicio Go informa las instancias y el progreso de las partidas en curso, y el servicio Scala calcula las estadísticas de las partidas finalizadas. La consola no recalcula ninguna métrica.</p>
+  </div>
+  <div class="sync-box">
+    <span class="live-badge" data-metric="liveBadge">SYNC</span>
+    <small data-metric="connection">Conectando…</small>
+    <small data-metric="updatedAt"></small>
+  </div>
+</section>
+
+<div class="stats-errors" data-stats-errors hidden></div>
+
+<section class="stats-section">
+  <div class="section-heading"><div><span class="eyebrow">Generales</span><h2>Todos los juegos</h2></div></div>
+  <div class="metrics-strip metrics-6">
+    <article><span>Instancias iniciadas</span><strong data-metric="startedMatches">—</strong><small>Go · MATCH_STARTED</small></article>
+    <article><span>Partidas activas</span><strong data-metric="activeMatches">—</strong><small>Go · en curso</small></article>
+    <article><span>Partidas analizadas</span><strong data-metric="completedMatches">—</strong><small>Scala · finalizadas</small></article>
+    <article><span>Eventos aceptados</span><strong data-metric="acceptedEvents">—</strong><small>Go · validados</small></article>
+    <article><span>Duración promedio</span><strong data-metric="averageDuration">—</strong><small>Scala</small></article>
+    <article><span>Tiempo total jugado</span><strong data-metric="totalPlayTime">—</strong><small>Scala</small></article>
+  </div>
+
+  <div class="panel table-panel">
+    <h3>Instancias por juego</h3>
+    <table class="data-table">
+      <thead><tr><th>Juego</th><th>Iniciadas</th><th>Activas</th><th>Finalizadas</th><th>Eventos aceptados</th><th>Analizadas (Scala)</th></tr></thead>
+      <tbody data-instances><tr><td colspan="6" class="muted">Sin datos todavía</td></tr></tbody>
+    </table>
+  </div>
+</section>
+
+<section class="stats-section">
+  <div class="section-heading"><div><span class="eyebrow">Por juego</span><h2>Ajedrez</h2></div><span class="status-pill violet">CHESS</span></div>
+  <div class="metrics-strip metrics-6">
+    <article><span>Partidas analizadas</span><strong data-chess="completedMatches">—</strong><small>finalizadas</small></article>
+    <article><span>Movimientos promedio</span><strong data-chess="averageMoves">—</strong><small>por partida</small></article>
+    <article><span>Capturas promedio</span><strong data-chess="averageCaptures">—</strong><small>por partida</small></article>
+    <article><span>Duración promedio</span><strong data-chess="averageDuration">—</strong><small>por partida</small></article>
+    <article><span>Victorias blancas</span><strong data-chess="whiteWins">—</strong><small data-chess="whitePct"></small></article>
+    <article><span>Victorias negras</span><strong data-chess="blackWins">—</strong><small data-chess="blackPct"></small></article>
+  </div>
+  <div class="stats-columns">
+    <div class="panel table-panel">
+      <h3>Resultados por motivo</h3>
+      <table class="data-table"><tbody data-chess-reasons><tr><td class="muted">Sin datos</td></tr></tbody></table>
+    </div>
+    <div class="panel table-panel">
+      <h3>Decisiones de la IA (Prolog)</h3>
+      <table class="data-table"><tbody data-chess-ai><tr><td class="muted">Sin datos</td></tr></tbody></table>
+    </div>
+  </div>
+  <div class="panel table-panel">
+    <h3>Jugadores</h3>
+    <table class="data-table">
+      <thead><tr><th>Jugador</th><th>Partidas</th><th>Ganadas</th><th>Tablas</th><th>Perdidas</th><th>Decisión promedio</th></tr></thead>
+      <tbody data-chess-players><tr><td colspan="6" class="muted">Sin datos</td></tr></tbody>
+    </table>
+  </div>
+</section>
+
+<section class="stats-section">
+  <div class="section-heading"><div><span class="eyebrow">Por juego</span><h2>Pac-Man y Carreras</h2></div></div>
+  <div class="stats-columns">
+    <div class="panel table-panel">
+      <h3>Pac-Man <span class="status-pill amber">PACMAN</span></h3>
+      <table class="data-table"><tbody data-game-table="PACMAN"><tr><td class="muted">Sin datos</td></tr></tbody></table>
+    </div>
+    <div class="panel table-panel">
+      <h3>Carreras <span class="status-pill cyan">RACING</span></h3>
+      <table class="data-table"><tbody data-game-table="RACING"><tr><td class="muted">Sin datos</td></tr></tbody></table>
+    </div>
+  </div>
+</section>
+
+<section class="stats-section">
+  <div class="section-heading"><div><span class="eyebrow">En vivo</span><h2>Partidas en curso</h2></div><span class="muted">Progreso que reporta la ingestión de GameStats</span></div>
+  <div class="panel table-panel">
+    <table class="data-table">
+      <thead><tr><th>Partida</th><th>Juego</th><th>Eventos</th><th>Progreso</th><th>Último evento</th></tr></thead>
+      <tbody data-active-matches><tr><td colspan="5" class="muted">Sin partidas activas</td></tr></tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/stats.js') }}"></script>
+{% endblock %}

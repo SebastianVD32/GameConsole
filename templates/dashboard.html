@@ -6,23 +6,23 @@
   <div>
     <span class="eyebrow">Centro de juego</span>
     <h1>¿Qué quieres jugar hoy?</h1>
-    <p>Inicia una partida o continúa una sesión activa. Cada instancia conserva su progreso y sus eventos por separado.</p>
+    <p>Cada partida es una instancia independiente con su propio identificador y sus propios eventos. Abre varias en distintas pestañas: GameStats las distingue por su <code>matchId</code>.</p>
   </div>
-  <button class="primary-button" type="button" data-scroll-to="game-library"><span>＋</span> Nueva partida</button>
+  <a class="primary-button" href="{{ url_for('web.game', game_id='ajedrez') }}"><span>＋</span> Nueva partida de ajedrez</a>
 </section>
 
-<section class="metrics-strip" aria-label="Resumen de actividad">
-  <article><span>Partidas activas</span><strong>2</strong><small><i class="positive"></i> ejecutándose ahora</small></article>
-  <article><span>Instancias hoy</span><strong>7</strong><small>3 juegos diferentes</small></article>
-  <article><span>Tiempo de juego</span><strong>01:42</strong><small>horas acumuladas</small></article>
-  <article><span>Eventos enviados</span><strong>1,284</strong><small><i class="positive"></i> GameStats conectado</small></article>
+<section class="metrics-strip" aria-label="Resumen de GameStats" data-live-summary>
+  <article><span>Partidas activas</span><strong data-metric="activeMatches">—</strong><small><i class="positive"></i> según GameStats (Go)</small></article>
+  <article><span>Instancias iniciadas</span><strong data-metric="startedMatches">—</strong><small>MATCH_STARTED aceptados</small></article>
+  <article><span>Partidas analizadas</span><strong data-metric="completedMatches">—</strong><small>resultados en Scala</small></article>
+  <article><span>Eventos aceptados</span><strong data-metric="acceptedEvents">—</strong><small data-metric="connection">Conectando con GameStats…</small></article>
 </section>
 
 <div class="dashboard-grid">
   <section class="panel library-panel" id="game-library">
     <div class="section-heading">
-      <div><span class="eyebrow">Biblioteca</span><h2>Tus juegos</h2></div>
-      <span class="muted">3 disponibles</span>
+      <div><span class="eyebrow">Biblioteca</span><h2>Juegos</h2></div>
+      <span class="muted">3 juegos · eventos hacia GameStats</span>
     </div>
 
     <div class="game-grid">
@@ -40,7 +40,7 @@
           <h3>{{ game.name }}</h3>
           <p>{{ game.description }}</p>
           <div class="game-actions">
-            <a class="card-button" href="{{ url_for('game', game_id=id) }}">{{ 'Continuar' if game.status != 'Disponible' else 'Jugar ahora' }} <span>→</span></a>
+            <a class="card-button" href="{{ url_for('web.game', game_id=id) }}">{{ 'Jugar ahora' if game.playable else 'Ver avance' }} <span>→</span></a>
             <span class="status-pill {{ game.accent }}">{{ game.status }}</span>
           </div>
         </div>
@@ -50,25 +50,24 @@
   </section>
 
   <aside class="panel activity-panel">
-    <div class="section-heading compact"><div><span class="eyebrow">En vivo</span><h2>Actividad</h2></div><span class="live-badge">LIVE</span></div>
+    <div class="section-heading compact"><div><span class="eyebrow">En esta consola</span><h2>Partidas activas</h2></div><span class="live-badge">LIVE</span></div>
     <div class="activity-list">
-      <button class="activity-item is-selected" type="button" data-session="Ajedrez · AJ-1042">
-        <span class="activity-icon violet">♞</span>
-        <span><strong>Ajedrez</strong><small>Turno del jugador</small></span>
-        <time>08:42</time>
-      </button>
-      <button class="activity-item" type="button" data-session="Pac-Man · PA-2087">
-        <span class="activity-icon amber">●</span>
-        <span><strong>Pac-Man</strong><small>Partida en pausa</small></span>
-        <time>02:40</time>
-      </button>
+      {% for item in active_sessions %}
+      {% set meta = games[item.slug] %}
+      <a class="activity-item" href="{{ url_for('web.game', game_id=item.slug) }}?partida={{ item.matchId }}">
+        <span class="activity-icon {{ meta.accent }}">{{ meta.icon }}</span>
+        <span><strong>{{ meta.name }}</strong><small>{{ item.status }}</small></span>
+        <time>{{ item.matchId[6:14] }}</time>
+      </a>
+      {% else %}
+      <p class="empty-note">No hay partidas en curso. Inicia una desde la biblioteca.</p>
+      {% endfor %}
     </div>
-    <div class="event-preview">
-      <div><span>Último evento</span><code>PLAYER_ACTION</code></div>
-      <p id="focused-session">Ajedrez · AJ-1042</p>
-      <small>Recibido hace 3 segundos</small>
-    </div>
-    <button class="secondary-button full-width" type="button" data-toast="El historial se habilitará al conectar GameStats.">Ver toda la actividad</button>
+    <a class="secondary-button full-width" href="{{ url_for('web.statistics') }}">Abrir panel de estadísticas</a>
   </aside>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/stats.js') }}"></script>
 {% endblock %}

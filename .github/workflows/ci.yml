@@ -1,0 +1,116 @@
+name: CI/CD GameConsole
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      gamestats_ref:
+        description: "Rama, tag o commit de GameStats para la integración"
+        required: false
+        default: main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GAMESTATS_REF: ${{ inputs.gamestats_ref || vars.GAMESTATS_REF || 'main' }}
+
+jobs:
+  tests:
+    name: Pruebas (Python + SWI-Prolog en Docker)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v7
+
+      - name: Compilar y ejecutar pruebas
+        run: docker build --target test --progress plain -t gameconsole:test .
+
+      - name: Configurar Node para las reglas de Pac-Man
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Probar reglas de Pac-Man y entrega de eventos
+        run: node --test tests/pacman.test.cjs tests/delivery.test.cjs
+
+  integration:
+    name: Ejecución integrada con GameStats
+    needs: tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar GameConsole
+        uses: actions/checkout@v7
+
+      - name: Descargar GameStats (${{ env.GAMESTATS_REF }})
+        uses: actions/checkout@v7
+        with:
+          repository: SebastianVD32/GameStats
+          ref: ${{ env.GAMESTATS_REF }}
+          path: GameStats
+
+      - name: Construir y levantar consola, Prolog, Go y Scala
+        env:
+          GAMESTATS_DIR: ./GameStats
+        run: docker compose up --build --wait --wait-timeout 300 -d
+
+      - name: Prueba de humo (partidas concurrentes contra la IA y estadísticas)
+        run: python3 scripts/smoke_test.py http://127.0.0.1:5000 --matches 4 --moves 6
+
+      - name: Registros de los servicios
+        if: failure()
+        env:
+          GAMESTATS_DIR: ./GameStats
+        run: docker compose logs --no-color
+
+      - name: Detener servicios
+        if: always()
+        env:
+          GAMESTATS_DIR: ./GameStats
+        run: docker compose down --volumes
+
+  publish:
+    name: Publicar imagen en GHCR
+    needs: integration
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v7
+
+      - name: Metadatos de la imagen
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/gameconsole
+          tags: |
+            type=sha,format=short
+            type=raw,value=latest
+
+      - name: Iniciar sesión en GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Construir y publicar
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: runtime
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

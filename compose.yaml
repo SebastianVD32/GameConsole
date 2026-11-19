@@ -1,0 +1,59 @@
+# Ejecución integrada: consola + motor Prolog + GameStats (Go y Scala).
+#
+# GameStats se construye desde su código fuente. Por defecto se usa el repositorio
+# clonado al lado (../GameStats); otra ubicación se indica con GAMESTATS_DIR:
+#   GAMESTATS_DIR=./GameStats docker compose up --build --wait
+name: gameconsole
+
+services:
+  console:
+    build:
+      context: .
+      target: runtime
+    image: gameconsole:local
+    environment:
+      GAMESTATS_INGEST_URL: http://gamestats-go:8080
+      GAMESTATS_INGESTION_URL: http://gamestats-go:8080   # puente de Pac-Man
+      GAMESTATS_ANALYTICS_URL: http://gamestats-scala:8081
+      GAMECONSOLE_AI_WORKERS: "4"
+      GAMECONSOLE_SEND_WORKERS: "8"
+    ports:
+      - "127.0.0.1:${GAMECONSOLE_PORT:-5000}:5000"
+    depends_on:
+      gamestats-go:
+        condition: service_healthy
+      gamestats-scala:
+        condition: service_healthy
+    restart: unless-stopped
+
+  gamestats-go:
+    build:
+      context: ${GAMESTATS_DIR:-../GameStats}/go-ingestion
+    image: gamestats/go-ingestion:gameconsole
+    environment:
+      HTTP_ADDR: ":8080"
+      WORKER_COUNT: "4"
+      OUTPUT_PATH: /data/ready-matches.jsonl
+      ANALYZER_URL: http://gamestats-scala:8081/api/v1/matches
+    ports:
+      - "127.0.0.1:${GAMESTATS_GO_PORT:-8080}:8080"
+    volumes:
+      - gamestats-data:/data
+    depends_on:
+      gamestats-scala:
+        condition: service_healthy
+    restart: unless-stopped
+
+  gamestats-scala:
+    build:
+      context: ${GAMESTATS_DIR:-../GameStats}/scala-analytics
+    image: gamestats/scala-analysis:gameconsole
+    ports:
+      - "127.0.0.1:${GAMESTATS_SCALA_PORT:-8081}:8081"
+    volumes:
+      - scala-results:/data/results
+    restart: unless-stopped
+
+volumes:
+  gamestats-data:
+  scala-results:
