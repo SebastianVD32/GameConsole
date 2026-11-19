@@ -13,7 +13,7 @@
 <body>
   <div class="app-shell">
     <aside class="sidebar" id="sidebar">
-      <a class="brand" href="{{ url_for('dashboard') }}" aria-label="Ir al inicio de GameConsole">
+      <a class="brand" href="{{ url_for('web.dashboard') }}" aria-label="Ir al inicio de GameConsole">
         <span class="brand-mark" aria-hidden="true">
           <svg viewBox="0 0 24 24" role="img">
             <path d="M7.1 8.1h9.8a4 4 0 0 1 3.8 2.8l1.1 3.6a2.9 2.9 0 0 1-4.7 3l-1.8-1.6H8.7l-1.8 1.6a2.9 2.9 0 0 1-4.7-3l1.1-3.6a4 4 0 0 1 3.8-2.8Z"/>
@@ -25,24 +25,25 @@
 
       <nav class="main-nav" aria-label="Navegación principal">
         <p class="nav-label">Consola</p>
-        <a class="nav-link {{ 'is-active' if page == 'dashboard' else '' }}" href="{{ url_for('dashboard') }}">
+        <a class="nav-link {{ 'is-active' if page == 'dashboard' else '' }}" href="{{ url_for('web.dashboard') }}">
           <span class="nav-icon">⌂</span><span>Resumen</span>
         </a>
-        <a class="nav-link {{ 'is-active' if page == 'games' else '' }}" href="{{ url_for('game', game_id='ajedrez') }}">
-          <span class="nav-icon">◇</span><span>Juegos</span><small>3</small>
+        <a class="nav-link {{ 'is-active' if page == 'games' else '' }}" href="{{ url_for('web.game', game_id='ajedrez') }}">
+          <span class="nav-icon">◇</span><span>Ajedrez</span><small>IA</small>
         </a>
-        <button class="nav-link" type="button" data-toast="Las estadísticas globales se conectarán a GameStats.">
-          <span class="nav-icon">⌁</span><span>Estadísticas</span>
-        </button>
+        <a class="nav-link {{ 'is-active' if page == 'stats' else '' }}" href="{{ url_for('web.statistics') }}">
+          <span class="nav-icon">⌁</span><span>Estadísticas</span><small>GameStats</small>
+        </a>
 
-        <p class="nav-label nav-label-spaced">Partidas recientes</p>
-        {% for id, item in games.items() %}
-          {% if item.status != 'Disponible' %}
-            <a class="session-link" href="{{ url_for('game', game_id=id) }}">
-              <span class="session-dot {{ item.accent }}"></span>
-              <span><strong>{{ item.short_name }}</strong><small>{{ item.session }}</small></span>
-            </a>
-          {% endif %}
+        <p class="nav-label nav-label-spaced">Partidas activas</p>
+        {% for item in active_sessions %}
+          {% set meta = games[item.slug] %}
+          <a class="session-link" href="{{ url_for('web.game', game_id=item.slug) }}?partida={{ item.matchId }}">
+            <span class="session-dot {{ meta.accent }}"></span>
+            <span><strong>{{ meta.short_name }}</strong><small>{{ item.matchId[:14] }} · {{ item.status }}</small></span>
+          </a>
+        {% else %}
+          <p class="session-empty">Sin partidas en curso</p>
         {% endfor %}
       </nav>
 

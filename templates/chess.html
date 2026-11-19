@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Ajedrez · GameConsole{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('web.dashboard') }}">Consola</a> / <span>Juegos</span> / Ajedrez{% endblock %}
+
+{% block content %}
+<section class="game-header">
+  <div>
+    <span class="eyebrow" data-chess-id>Jugador vs. IA Prolog · nueva partida</span>
+    <h1>Ajedrez</h1>
+  </div>
+  <div class="game-header-actions">
+    <span class="status-pill violet" data-chess-status><i></i>Sin iniciar</span>
+    <a class="secondary-button" href="{{ url_for('web.game', game_id='ajedrez') }}" target="_blank" rel="noopener">＋ Otra instancia</a>
+    <button class="danger-button" type="button" data-action="resign" disabled>⚑ Abandonar</button>
+  </div>
+</section>
+
+<div class="play-layout">
+  <section class="play-stage panel violet-stage">
+    <div class="stage-toolbar">
+      <span><i class="live-dot"></i> <span data-chess-match>Instancia sin crear</span></span>
+      <div><span data-chess-delivery>GameStats: —</span><strong>●</strong></div>
+    </div>
+
+    <form class="chess-setup" data-chess-setup>
+      <h2>Nueva partida</h2>
+      <p>La computadora decide cada jugada con una búsqueda negamax con poda alfa-beta escrita en Prolog. Cada partida es una instancia independiente con su propio <code>matchId</code>.</p>
+      <label>Tu nombre
+        <input name="name" maxlength="32" value="Jugador" autocomplete="nickname" required>
+      </label>
+      <fieldset>
+        <legend>Tu color</legend>
+        <label class="choice"><input type="radio" name="color" value="WHITE" checked><span>♔ Blancas</span></label>
+        <label class="choice"><input type="radio" name="color" value="BLACK"><span>♚ Negras</span></label>
+        <label class="choice"><input type="radio" name="color" value="RANDOM"><span>⚄ Aleatorio</span></label>
+      </fieldset>
+      <fieldset>
+        <legend>Dificultad (profundidad de búsqueda)</legend>
+        {% for depth, label in difficulties.items() %}
+        <label class="choice"><input type="radio" name="depth" value="{{ depth }}" {{ 'checked' if depth == 3 else '' }}><span>{{ label }} · {{ depth }}</span></label>
+        {% endfor %}
+      </fieldset>
+      <fieldset>
+        <legend>Control de tiempo (minutos + incremento)</legend>
+        {% for control in time_controls %}
+        <label class="choice"><input type="radio" name="control" value="{{ control }}" {{ 'checked' if control == '10+5' else '' }}><span>{{ control }}</span></label>
+        {% endfor %}
+      </fieldset>
+      <button class="primary-button full-width" type="submit">Iniciar partida</button>
+      <p class="form-error" data-setup-error hidden></p>
+    </form>
+
+    <div class="chess-game" data-chess-game hidden>
+      <div class="player-bar" data-player="top">
+        <span class="player-avatar dark" data-avatar>IA</span>
+        <span><strong data-name>—</strong><small data-detail>—</small></span>
+        <time data-clock>--:--</time>
+      </div>
+      <div class="captured-row" data-captured="top"></div>
+      <div class="chessboard" data-board aria-label="Tablero de ajedrez"></div>
+      <div class="captured-row" data-captured="bottom"></div>
+      <div class="player-bar" data-player="bottom">
+        <span class="player-avatar" data-avatar>TÚ</span>
+        <span><strong data-name>—</strong><small data-detail>—</small></span>
+        <time data-clock>--:--</time>
+      </div>
+      <div class="result-banner" data-result hidden></div>
+      <div class="promotion-picker" data-promotion hidden>
+        <span>Promocionar a</span>
+        <button type="button" data-promo="q">♛</button>
+        <button type="button" data-promo="r">♜</button>
+        <button type="button" data-promo="b">♝</button>
+        <button type="button" data-promo="n">♞</button>
+      </div>
+    </div>
+  </section>
+
+  <aside class="telemetry panel">
+    <div class="section-heading compact"><div><span class="eyebrow">Motor Prolog</span><h2>Decisión de la IA</h2></div><span class="live-badge" data-ai-badge>IDLE</span></div>
+    <div class="telemetry-grid">
+      <article><span>Jugada</span><strong data-ai="move">—</strong><small>última elegida</small></article>
+      <article><span>Evaluación</span><strong data-ai="score">—</strong><small>centipeones</small></article>
+      <article><span>Nodos</span><strong data-ai="nodes">—</strong><small data-ai="depth">profundidad —</small></article>
+      <article><span>Cálculo</span><strong data-ai="time">—</strong><small>tiempo en Prolog</small></article>
+    </div>
+
+    <div class="event-stream">
+      <div class="stream-heading"><strong>Movimientos</strong><span data-move-count>0</span></div>
+      <ol class="move-list" data-moves></ol>
+    </div>
+
+    <div class="section-heading compact"><div><span class="eyebrow">GameStats</span><h2>Esta partida</h2></div><span class="live-badge" data-gs-badge>SYNC</span></div>
+    <div class="telemetry-grid">
+      <article><span>Eventos emitidos</span><strong data-gs="emitted">0</strong><small>por la partida</small></article>
+      <article><span>Entregados</span><strong data-gs="delivered">0</strong><small data-gs="pending">0 pendientes</small></article>
+    </div>
+    <div class="gs-result" data-gs-result hidden></div>
+    <div class="event-stream">
+      <div class="stream-heading"><strong>Eventos recientes</strong><span data-gs="state">—</span></div>
+      <ol data-events></ol>
+    </div>
+    <a class="secondary-button full-width" href="{{ url_for('web.statistics') }}" target="_blank" rel="noopener">Abrir panel de estadísticas</a>
+  </aside>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/chess.js') }}"></script>
+{% endblock %}
