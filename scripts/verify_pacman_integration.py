@@ -30,6 +30,7 @@ def main(test_file="tests/gamestats.integration.cjs", game_path="/juegos/pacman"
     while ingestion_port == console_port:
         console_port = free_port()
     env = dict(os.environ, GAMESTATS_INGESTION_URL=f"http://127.0.0.1:{ingestion_port}",
+               GAMESTATS_INGEST_URL=f"http://127.0.0.1:{ingestion_port}",
                CONSOLE_URL=f"http://127.0.0.1:{console_port}")
     processes = []
     flags = {"creationflags": subprocess.CREATE_NO_WINDOW} if os.name == "nt" else {}

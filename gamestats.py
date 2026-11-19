@@ -11,7 +11,12 @@ stats = Blueprint("gamestats", __name__)
 
 
 def forward(base, path, payload=None):
-    url = os.environ.get(base, "http://127.0.0.1:8080" if base == "GAMESTATS_INGESTION_URL" else "http://127.0.0.1:8081").rstrip("/") + path
+    if base == "GAMESTATS_INGESTION_URL":
+        # The shared console uses INGEST_URL; retain the earlier arcade alias.
+        base_url = os.environ.get("GAMESTATS_INGEST_URL", os.environ.get(base, "http://127.0.0.1:8080"))
+    else:
+        base_url = os.environ.get(base, "http://127.0.0.1:8081")
+    url = base_url.rstrip("/") + path
     data = json.dumps(payload).encode() if payload is not None else None
     upstream = Request(url, data=data, headers={"Content-Type": "application/json"})
     try:

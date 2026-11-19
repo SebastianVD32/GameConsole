@@ -1,35 +1,105 @@
 import unittest
 
-from app import app
+from gameconsole import create_app
+from gameconsole.events import MemorySink
+from gameconsole.registry import MatchRegistry
+from gameconsole.services import ConsoleServices
+
+from tests.helpers import ImmediateExecutor, ScriptedEngine
 
 
-class GameConsoleRoutesTest(unittest.TestCase):
+class StubStats:
+    configured = True
+
+    def overview(self):
+        return {"ingestion": {"totals": {"startedMatches": 1}}, "analytics": {"general": {}}, "errors": []}
+
+    def match_result(self, match_id):
+        return {"matchId": match_id, "reason": "RESIGNATION"} if match_id == "known" else None
+
+    def health(self):
+        return {"ingestion": "ok", "analytics": "ok"}
+
+
+def make_client():
+    services = ConsoleServices(
+        registry=MatchRegistry(), sink=MemorySink(), engine=ScriptedEngine(),
+        ai_executor=ImmediateExecutor(), stats=StubStats(),
+    )
+    app = create_app(services)
+    app.config.update(TESTING=True)
+    return app.test_client(), services
+
+
+class PagesTest(unittest.TestCase):
     def setUp(self):
-        app.config.update(TESTING=True)
-        self.client = app.test_client()
+        self.client, _ = make_client()
 
-    def test_dashboard_loads_the_three_games(self):
-        response = self.client.get("/")
-        self.assertEqual(response.status_code, 200)
-        html = response.get_data(as_text=True)
-        self.assertIn("Ajedrez", html)
-        self.assertIn("Pac-Man", html)
-        self.assertIn("Juego de carreras", html)
+    def test_dashboard_lists_the_three_games(self):
+        html = self.client.get("/").get_data(as_text=True)
+        for name in ("Ajedrez", "Pac-Man", "Juego de carreras"):
+            self.assertIn(name, html)
 
-    def test_each_game_route_loads(self):
-        for game_id in ("ajedrez", "pacman", "carreras"):
-            with self.subTest(game_id=game_id):
-                response = self.client.get(f"/juegos/{game_id}")
-                self.assertEqual(response.status_code, 200)
-
-    def test_chess_demo_renders_a_complete_board(self):
-        response = self.client.get("/juegos/ajedrez")
-        self.assertEqual(response.get_data(as_text=True).count('class="square"'), 64)
+    def test_each_game_and_stats_page_loads(self):
+        for path in ("/juegos/ajedrez", "/juegos/pacman", "/juegos/carreras", "/estadisticas"):
+            with self.subTest(path=path):
+                self.assertEqual(self.client.get(path).status_code, 200)
 
     def test_unknown_game_returns_custom_404(self):
         response = self.client.get("/juegos/desconocido")
         self.assertEqual(response.status_code, 404)
         self.assertIn("Esta pantalla no existe", response.get_data(as_text=True))
+
+
+class ChessApiTest(unittest.TestCase):
+    def setUp(self):
+        self.client, self.services = make_client()
+
+    def create(self, **body):
+        return self.client.post("/api/ajedrez/partidas", json={"name": "Ana", "color": "WHITE", **body})
+
+    def test_create_play_and_resign(self):
+        created = self.create()
+        self.assertEqual(created.status_code, 201)
+        state = created.get_json()
+        match_id = state["matchId"]
+        self.assertTrue(match_id.startswith("chess-"))
+        self.assertEqual(state["players"][0]["playerId"], "jugador-ana")
+        self.assertEqual(state["delivery"]["state"], "DISABLED")
+
+        moved = self.client.post(f"/api/ajedrez/partidas/{match_id}/movimientos", json={"move": "e2e4"})
+        self.assertEqual(moved.status_code, 200)
+        self.assertEqual(len(moved.get_json()["history"]), 2)  # jugada humana + respuesta de la IA
+
+        illegal = self.client.post(f"/api/ajedrez/partidas/{match_id}/movimientos", json={"move": "e4e6"})
+        self.assertEqual(illegal.status_code, 409)
+
+        resigned = self.client.post(f"/api/ajedrez/partidas/{match_id}/abandonar")
+        self.assertEqual(resigned.get_json()["result"]["reason"], "RESIGNATION")
+
+    def test_parallel_instances_have_independent_events(self):
+        first = self.create().get_json()["matchId"]
+        second = self.create(color="BLACK").get_json()["matchId"]
+        self.assertNotEqual(first, second)
+        events = self.services.sink.events
+        for match_id in (first, second):
+            sequences = [e["sequence"] for e in events if e["matchId"] == match_id]
+            self.assertEqual(sequences, list(range(1, len(sequences) + 1)))
+        listed = {item["matchId"] for item in self.client.get("/api/partidas").get_json()}
+        self.assertEqual(listed, {first, second})
+
+    def test_invalid_options_are_rejected(self):
+        self.assertEqual(self.create(depth=9).status_code, 400)
+        self.assertEqual(self.create(control="1+0").status_code, 400)
+        self.assertEqual(self.create(color="GREEN").status_code, 400)
+
+    def test_unknown_match(self):
+        self.assertEqual(self.client.get("/api/ajedrez/partidas/nope").status_code, 404)
+
+    def test_statistics_are_proxied_from_gamestats(self):
+        self.assertEqual(self.client.get("/api/estadisticas").get_json()["ingestion"]["totals"]["startedMatches"], 1)
+        self.assertEqual(self.client.get("/api/estadisticas/partidas/known").status_code, 200)
+        self.assertEqual(self.client.get("/api/estadisticas/partidas/other").status_code, 404)
 
 
 if __name__ == "__main__":

@@ -1,15 +1,17 @@
 import io
 import json
+import os
 import unittest
 from unittest.mock import patch
 from urllib.error import HTTPError, URLError
 
-from app import app
+from tests.test_app import make_client
+from gameconsole.services import Settings
 
 
 class GameStatsBridgeTest(unittest.TestCase):
     def setUp(self):
-        self.client = app.test_client()
+        self.client, _ = make_client()
 
     def test_pacman_loads_real_controls_and_its_modules_only_on_its_page(self):
         html = self.client.get('/juegos/pacman').get_data(as_text=True)
@@ -75,6 +77,19 @@ class GameStatsBridgeTest(unittest.TestCase):
         urlopen.return_value.__enter__.return_value.status = 200
         self.assertEqual(self.client.get('/api/gamestats/matches/race-one').json, data)
         self.assertTrue(urlopen.call_args.args[0].full_url.endswith('/api/v1/matches/race-one'))
+
+    @patch.dict(os.environ, {'GAMESTATS_INGEST_URL': 'http://shared-ingestion:18080', 'GAMESTATS_INGESTION_URL': 'http://legacy:8080'})
+    @patch('gamestats.urlopen')
+    def test_arcade_bridge_and_chess_use_the_same_configured_ingestion(self, urlopen):
+        urlopen.return_value.__enter__.return_value = io.StringIO('{"accepted":true}')
+        urlopen.return_value.__enter__.return_value.status = 201
+        self.client.post('/api/gamestats/events', json={'gameId': 'RACING'})
+        self.assertEqual(urlopen.call_args.args[0].full_url, 'http://shared-ingestion:18080/api/v1/events')
+        self.assertEqual(Settings.from_env().ingest_url, 'http://shared-ingestion:18080')
+
+    @patch.dict(os.environ, {'GAMESTATS_INGESTION_URL': 'http://legacy-ingestion:18080'}, clear=True)
+    def test_legacy_arcade_ingestion_setting_is_preserved(self):
+        self.assertEqual(Settings.from_env().ingest_url, 'http://legacy-ingestion:18080')
 
 
 if __name__ == '__main__':

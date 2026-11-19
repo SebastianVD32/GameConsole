@@ -1,66 +1,45 @@
 {% extends "base.html" %}
 {% block title %}{{ game.short_name }} · GameConsole{% endblock %}
-{% block breadcrumb %}<a href="{{ url_for('dashboard') }}">Consola</a> / <span>Juegos</span> / {{ game.short_name }}{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('web.dashboard') }}">Consola</a> / <span>Juegos</span> / {{ game.short_name }}{% endblock %}
 
 {% block content %}
 <section class="game-header">
   <div>
-    <span class="eyebrow">{{ game.eyebrow }} · {{ game.session }}</span>
+    <span class="eyebrow">{{ game.eyebrow }} · {{ game.game_id }}</span>
     <h1>{{ game.name }}</h1>
   </div>
   <div class="game-header-actions">
     <span class="status-pill {{ game.accent }}"><i></i>{{ game.status }}</span>
-    <button class="secondary-button" type="button" data-toast="La partida quedó pausada.">Ⅱ Pausar</button>
-    <button class="danger-button" type="button" data-toast="El reinicio se conectará a la lógica del juego.">↻ Reiniciar</button>
   </div>
 </section>
 
 <div class="play-layout">
   <section class="play-stage panel {{ game.accent }}-stage">
     <div class="stage-toolbar">
-      <span><i class="live-dot"></i> Instancia {{ game.session }}</span>
-      <div><span>Eventos aislados</span><strong>●</strong></div>
+      <span><i class="live-dot"></i> Vista previa</span>
+      <div><span>Contrato de eventos listo</span><strong>●</strong></div>
     </div>
 
-    {% if game_id == 'ajedrez' %}
-    <div class="chess-game">
-      <div class="player-bar"><span class="player-avatar dark">IA</span><span><strong>Motor Prolog</strong><small>Evaluando profundidad 4</small></span><time>09:37</time></div>
-      <div class="chessboard" aria-label="Tablero de ajedrez de demostración">
-        {% set pieces = [
-          '♜','♞','♝','♛','♚','♝','♞','♜',
-          '♟','♟','♟','♟','','♟','♟','♟',
-          '','','♞','','','','','',
-          '','','','','♟','','','',
-          '','','','','♙','','','',
-          '','','','','','♘','','',
-          '♙','♙','♙','♙','','♙','♙','♙',
-          '♖','♘','♗','♕','♔','♗','','♖'
-        ] %}
-        {% for piece in pieces %}<button class="square" type="button" aria-label="Casilla {{ loop.index }}">{{ piece }}</button>{% endfor %}
-      </div>
-      <div class="player-bar"><span class="player-avatar">SV</span><span><strong>Tú</strong><small>Selecciona una pieza</small></span><time>08:42</time></div>
+    <div class="race-game" aria-label="Vista previa del juego de carreras">
+      <div class="race-hud"><span><small>VELOCIDAD</small><strong>0</strong> km/h</span><span><small>VUELTA</small><strong>0 / 3</strong></span></div>
+      <div class="race-track"><div class="track-line"></div><span class="race-car">▲</span><span class="rival-car one">▲</span><span class="rival-car two">▲</span></div>
+      <p class="control-hint"><kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd> para conducir</p>
     </div>
-    {% endif %}
   </section>
 
   <aside class="telemetry panel">
-    <div class="section-heading compact"><div><span class="eyebrow">GameStats</span><h2>Partida actual</h2></div><span class="live-badge">SYNC</span></div>
-    <p class="telemetry-note">Datos de muestra para validar la distribución visual.</p>
-    <div class="telemetry-grid">
-      <article><span>Duración</span><strong>08:42</strong><small>sesión activa</small></article>
-      <article><span>Eventos</span><strong>128</strong><small>enviados</small></article>
-      <article><span>{{ 'Movimientos' if game_id == 'ajedrez' else 'Puntuación' if game_id == 'pacman' else 'Posición' }}</span><strong>{{ '24' if game_id == 'ajedrez' else '4,820' if game_id == 'pacman' else '2º' }}</strong><small>valor actual</small></article>
-      <article><span>Latencia</span><strong>42<small> ms</small></strong><small>con GameStats</small></article>
-    </div>
+    <div class="section-heading compact"><div><span class="eyebrow">GameStats</span><h2>Integración</h2></div><span class="live-badge">LISTA</span></div>
+    <p class="telemetry-note">Este juego está en desarrollo. Su emisión de eventos ya está preparada en <code>gameconsole/events/contracts.py</code> (RacingEvents), con el despachador concurrente compartido con el ajedrez.</p>
     <div class="event-stream">
-      <div class="stream-heading"><strong>Eventos recientes</strong><span>Ahora</span></div>
+      <div class="stream-heading"><strong>Eventos del contrato</strong><span>{{ game.game_id }}</span></div>
       <ol>
-        <li><i></i><span><code>PLAYER_ACTION</code><small>Hace 3 s · {{ game.session }}</small></span></li>
-        <li><i></i><span><code>STATE_UPDATED</code><small>Hace 8 s · {{ game.session }}</small></span></li>
-        <li><i></i><span><code>MATCH_STARTED</code><small>Hace 8 min · {{ game.session }}</small></span></li>
+        <li><i></i><span><code>MATCH_STARTED</code><small>inicio de la instancia</small></span></li>
+        <li><i></i><span><code>LAP_COMPLETED · PENALTY_APPLIED</code><small>vueltas y sanciones</small></span></li>
+        <li><i></i><span><code>PIT_ENTERED · PIT_EXITED</code><small>paradas en boxes</small></span></li>
+        <li><i></i><span><code>MATCH_FINISHED</code><small>cierre y resultado</small></span></li>
       </ol>
     </div>
-    <button class="secondary-button full-width" type="button" data-toast="El detalle provendrá de la API de GameStats.">Abrir detalle de estadísticas</button>
+    <a class="secondary-button full-width" href="{{ url_for('web.statistics') }}">Ver estadísticas de GameStats</a>
   </aside>
 </div>
 {% endblock %}
