@@ -20,38 +20,22 @@
       <div><span>Contrato de eventos listo</span><strong>●</strong></div>
     </div>
 
-    {% if game_id == 'pacman' %}
-    <div class="maze-game" aria-label="Vista previa de Pac-Man">
-      <div class="maze-hud"><span>PUNTOS <strong>0</strong></span><span>VIDAS <strong>● ● ●</strong></span></div>
-      <div class="maze-board">
-        <div class="maze-lines"></div><span class="pac-player">◔</span><span class="ghost one">♟</span><span class="ghost two">♟</span>
-        {% for i in range(34) %}<i class="pellet" style="--i:{{ i }}"></i>{% endfor %}
-      </div>
-      <p class="control-hint"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> para moverte</p>
-    </div>
-    {% else %}
     <div class="race-game" aria-label="Vista previa del juego de carreras">
       <div class="race-hud"><span><small>VELOCIDAD</small><strong>0</strong> km/h</span><span><small>VUELTA</small><strong>0 / 3</strong></span></div>
       <div class="race-track"><div class="track-line"></div><span class="race-car">▲</span><span class="rival-car one">▲</span><span class="rival-car two">▲</span></div>
       <p class="control-hint"><kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd> para conducir</p>
     </div>
-    {% endif %}
   </section>
 
   <aside class="telemetry panel">
     <div class="section-heading compact"><div><span class="eyebrow">GameStats</span><h2>Integración</h2></div><span class="live-badge">LISTA</span></div>
-    <p class="telemetry-note">Este juego está en desarrollo. Su emisión de eventos ya está preparada en <code>gameconsole/events/contracts.py</code> ({{ 'PacmanEvents' if game_id == 'pacman' else 'RacingEvents' }}), con el despachador concurrente compartido con el ajedrez.</p>
+    <p class="telemetry-note">Este juego está en desarrollo. Su emisión de eventos ya está preparada en <code>gameconsole/events/contracts.py</code> (RacingEvents), con el despachador concurrente compartido con el ajedrez.</p>
     <div class="event-stream">
       <div class="stream-heading"><strong>Eventos del contrato</strong><span>{{ game.game_id }}</span></div>
       <ol>
         <li><i></i><span><code>MATCH_STARTED</code><small>inicio de la instancia</small></span></li>
-        {% if game_id == 'pacman' %}
-        <li><i></i><span><code>PELLET_EATEN · POWER_UP_COLLECTED</code><small>puntos y poderes</small></span></li>
-        <li><i></i><span><code>GHOST_EATEN · LIFE_LOST · LEVEL_COMPLETED</code><small>desarrollo de la partida</small></span></li>
-        {% else %}
         <li><i></i><span><code>LAP_COMPLETED · PENALTY_APPLIED</code><small>vueltas y sanciones</small></span></li>
         <li><i></i><span><code>PIT_ENTERED · PIT_EXITED</code><small>paradas en boxes</small></span></li>
-        {% endif %}
         <li><i></i><span><code>MATCH_FINISHED</code><small>cierre y resultado</small></span></li>
       </ol>
     </div>

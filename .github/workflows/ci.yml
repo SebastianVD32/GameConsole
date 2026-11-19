@@ -35,6 +35,14 @@ jobs:
       - name: Compilar y ejecutar pruebas
         run: docker build --target test --progress plain -t gameconsole:test .
 
+      - name: Configurar Node para las reglas de Pac-Man
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Probar reglas de Pac-Man y entrega de eventos
+        run: node --test tests/pacman.test.cjs tests/delivery.test.cjs
+
   integration:
     name: Ejecución integrada con GameStats
     needs: tests

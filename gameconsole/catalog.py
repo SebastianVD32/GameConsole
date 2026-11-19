@@ -20,8 +20,8 @@ GAMES = {
         "description": "Recorre el laberinto, supera tu puntuación y evita a los fantasmas.",
         "icon": "●",
         "accent": "amber",
-        "status": "En desarrollo",
-        "playable": False,
+        "status": "Disponible",
+        "playable": True,
     },
     "carreras": {
         "name": "Juego de carreras",

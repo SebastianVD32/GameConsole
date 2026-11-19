@@ -34,6 +34,8 @@ def game(game_id: str):
     if game_id == "ajedrez":
         return render_template("chess.html", page="games", game=selected, game_id=game_id,
                                difficulties=DIFFICULTIES, time_controls=list(TIME_CONTROLS), **_context())
+    if game_id == "pacman":
+        return render_template("pacman.html", page="games", game=selected, game_id=game_id, **_context())
     return render_template("game.html", page="games", game=selected, game_id=game_id, **_context())
 
 

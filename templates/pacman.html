@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Pac-Man · GameConsole{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('web.dashboard') }}">Consola</a> / <span>Juegos</span> / Pac-Man{% endblock %}
+{% block content %}
+<section class="game-header">
+  <div><span class="eyebrow">Arcade individual · Un nivel, tres vidas</span><h1>Pac-Man</h1></div>
+  <div class="game-header-actions">
+    <span class="status-pill amber" id="match-status" role="status">Listo para jugar</span>
+    <button class="secondary-button" id="pause-game" type="button" disabled>Ⅱ Pausar</button>
+    <button class="danger-button" id="restart-game" type="button">↻ Nueva partida</button>
+  </div>
+</section>
+<div class="play-layout pacman-layout">
+  <section class="play-stage panel amber-stage">
+    <div class="stage-toolbar"><span><i class="live-dot"></i> <span id="match-label">Nueva instancia</span></span><span>Control local · Sin Prolog</span></div>
+    <div class="pacman-game">
+      <div class="pacman-hud">
+        <span>PUNTOS<strong id="pac-score">0</strong></span>
+        <span>VIDAS<strong id="pac-lives">3</strong></span>
+        <span>PASTILLAS<strong id="pac-pellets">0</strong></span>
+      </div>
+      <div class="pacman-board-wrap">
+        <canvas id="pacman-board" width="630" height="630" tabindex="0" aria-label="Laberinto de Pac-Man. Usa flechas o WASD para moverte y P para pausar." aria-describedby="pacman-help">Tu navegador necesita admitir Canvas para jugar.</canvas>
+        <div class="pacman-overlay" id="game-overlay">
+          <span class="eyebrow">GameConsole Arcade</span>
+          <h2 id="overlay-title">El laberinto te espera</h2>
+          <p id="overlay-description">Recoge todas las pastillas. Los poderes te permiten atrapar fantasmas durante 8 segundos.</p>
+          <button class="primary-button" id="start-game" type="button">Jugar ahora →</button>
+        </div>
+      </div>
+      <div class="power-meter"><span id="power-label">Recoge un poder para atrapar fantasmas</span><progress id="power-progress" max="8" value="0" aria-label="Segundos de poder restantes"></progress></div>
+      <p class="control-hint" id="pacman-help"><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> o WASD · <kbd>P</kbd> pausa</p>
+      <div class="direction-pad" aria-label="Controles táctiles">
+        <button type="button" data-direction="up" aria-label="Mover arriba">↑</button>
+        <button type="button" data-direction="left" aria-label="Mover a la izquierda">←</button>
+        <button type="button" data-direction="down" aria-label="Mover abajo">↓</button>
+        <button type="button" data-direction="right" aria-label="Mover a la derecha">→</button>
+      </div>
+      <p class="pacman-rules">Pastilla <b>10</b> · Poder <b>50</b> · Fantasmas <b>200 / 400 / 800 / 1600</b></p>
+    </div>
+  </section>
+  <aside class="telemetry panel">
+    <div class="section-heading compact"><div><span class="eyebrow">Esta instancia</span><h2>Partida actual</h2></div><span class="live-badge">LOCAL</span></div>
+    <p class="telemetry-note">Estado del juego en esta pestaña. Cada nueva partida tiene su propio identificador.</p>
+    <div class="telemetry-grid">
+      <article><span>Tiempo de juego</span><strong id="pac-time">00:00</strong><small>sin pausas</small></article>
+      <article><span>Eventos creados</span><strong id="event-count">0</strong><small>contrato PACMAN 1.0</small></article>
+    </div>
+    <div class="event-stream"><div class="stream-heading"><strong>Eventos recientes</strong><span>Esta partida</span></div><ol id="pac-events"><li><span><small>Inicia una partida para generar eventos.</small></span></li></ol></div>
+    <button class="secondary-button full-width" id="export-events" type="button" disabled>↓ Descargar eventos JSONL</button>
+    <div class="pacman-stats">
+      <div class="section-heading compact"><div><span class="eyebrow">GameStats</span><h2>Tu historial</h2></div><span class="live-badge" id="stats-badge">ESPERANDO</span></div>
+      <p class="telemetry-note" id="delivery-status" role="status">Comprobando conexión…</p>
+      <div class="telemetry-grid">
+        <article><span>Partidas terminadas</span><strong id="stats-matches">—</strong><small>procesadas por Scala</small></article>
+        <article><span>Mejor puntuación</span><strong id="stats-best">—</strong><small>desde GameStats</small></article>
+      </div>
+      <p class="telemetry-note stats-explanation" id="stats-status">El historial se actualiza al procesar partidas terminadas.</p>
+      <button class="secondary-button full-width" id="retry-events" type="button">↻ Reintentar conexión</button>
+    </div>
+  </aside>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/pacman-engine.js') }}"></script>
+<script src="{{ url_for('static', filename='js/gamestats.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pacman.js') }}"></script>
+{% endblock %}

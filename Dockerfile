@@ -16,7 +16,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app.py ./
+COPY app.py gamestats.py ./
 COPY gameconsole ./gameconsole
 COPY templates ./templates
 COPY static ./static
@@ -31,6 +31,7 @@ RUN useradd --system --uid 10001 --no-create-home gameconsole
 USER gameconsole
 EXPOSE 5000
 ENV GAMESTATS_INGEST_URL=http://gamestats-go:8080 \
+    GAMESTATS_INGESTION_URL=http://gamestats-go:8080 \
     GAMESTATS_ANALYTICS_URL=http://gamestats-scala:8081
 HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=5 \
     CMD curl --fail --silent http://127.0.0.1:5000/healthz || exit 1

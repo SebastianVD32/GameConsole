@@ -13,6 +13,7 @@ services:
     image: gameconsole:local
     environment:
       GAMESTATS_INGEST_URL: http://gamestats-go:8080
+      GAMESTATS_INGESTION_URL: http://gamestats-go:8080   # puente de Pac-Man
       GAMESTATS_ANALYTICS_URL: http://gamestats-scala:8081
       GAMECONSOLE_AI_WORKERS: "4"
       GAMECONSOLE_SEND_WORKERS: "8"
