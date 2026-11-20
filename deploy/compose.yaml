@@ -2,14 +2,13 @@
 #   docker compose -f deploy/compose.yaml up -d --wait
 # Abre http://localhost:5000
 #
-# GAMECONSOLE_TAG: imagen publicada por el pipeline de GameConsole (latest o sha-xxxxxxx).
-# GAMESTATS_VERSION: versión publicada de GameStats que incluye AI_DECISION,
-#   /api/v1/summary (Go) y /api/v1/stats (Scala).
+# GAMECONSOLE_TAG: misma versión para los tres servicios (latest o sha-<commit completo>).
+# El pipeline publica los tres componentes después de probar su integración.
 name: gameconsole-deploy
 
 services:
   console:
-    image: ghcr.io/sebastianvd32/gameconsole:${GAMECONSOLE_TAG:-latest}
+    image: ghcr.io/${IMAGE_OWNER:-sebastianvd32}/gameconsole:${GAMECONSOLE_TAG:-latest}
     platform: linux/amd64
     pull_policy: always
     environment:
@@ -20,7 +19,7 @@ services:
     volumes:
       - arcade-events:/data/arcade
     ports:
-      - "${GAMECONSOLE_PORT:-5000}:5000"
+      - "127.0.0.1:${GAMECONSOLE_PORT:-5000}:5000"
     depends_on:
       gamestats-go:
         condition: service_healthy
@@ -29,7 +28,7 @@ services:
     restart: unless-stopped
 
   gamestats-go:
-    image: ghcr.io/sebastianvd32/gamestats-go:${GAMESTATS_VERSION:-v1.2.0}
+    image: ghcr.io/${IMAGE_OWNER:-sebastianvd32}/gameconsole-gamestats-go:${GAMECONSOLE_TAG:-latest}
     platform: linux/amd64
     pull_policy: always
     environment:
@@ -48,7 +47,7 @@ services:
     restart: unless-stopped
 
   gamestats-scala:
-    image: ghcr.io/sebastianvd32/gamestats-scala:${GAMESTATS_VERSION:-v1.2.0}
+    image: ghcr.io/${IMAGE_OWNER:-sebastianvd32}/gameconsole-gamestats-scala:${GAMECONSOLE_TAG:-latest}
     platform: linux/amd64
     pull_policy: always
     volumes:
