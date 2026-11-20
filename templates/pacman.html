@@ -5,10 +5,10 @@
 <section class="game-header arcade-header">
   <div><span class="eyebrow">Arcade individual · Un nivel, tres vidas</span><h1>Pac-Man</h1></div>
   <div class="game-header-actions">
-    <a class="secondary-button" href="{{ url_for('web.game', game_id='pacman') }}" target="_blank" rel="noopener">＋ Otra instancia</a>
     <span class="status-pill amber" id="match-status" role="status">Listo para jugar</span>
+    <a class="secondary-button" href="{{ url_for('web.game', game_id='pacman') }}" target="_blank" rel="noopener">＋ Abrir otra partida</a>
     <button class="secondary-button" id="pause-game" type="button" disabled>Ⅱ Pausar</button>
-    <button class="danger-button" id="restart-game" type="button">↻ Nueva partida</button>
+    <button class="danger-button" id="restart-game" type="button">↻ Reiniciar</button>
   </div>
 </section>
 <div class="play-layout pacman-layout">

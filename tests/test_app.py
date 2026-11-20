@@ -48,6 +48,19 @@ class PagesTest(unittest.TestCase):
         self.assertIn('class="nav-link is-active" href="/juegos/pacman"', html)
         self.assertNotIn('class="nav-link is-active" href="/juegos/ajedrez"', html)
 
+    def test_game_pages_offer_a_contextual_game_switcher(self):
+        html = self.client.get("/juegos/pacman").get_data(as_text=True)
+        self.assertIn('aria-label="Cambiar de juego"', html)
+        for path in ("/juegos/ajedrez", "/juegos/pacman", "/juegos/carreras"):
+            self.assertIn(f'href="{path}"', html)
+        self.assertIn('class="game-switch amber is-active"', html)
+
+    def test_statistics_page_has_section_navigation(self):
+        html = self.client.get("/estadisticas").get_data(as_text=True)
+        for anchor in ("resumen-general", "estadisticas-ajedrez", "estadisticas-arcade", "partidas-activas"):
+            self.assertIn(f'href="#{anchor}"', html)
+            self.assertIn(f'id="{anchor}"', html)
+
     def test_each_game_and_stats_page_loads(self):
         for path in ("/juegos/ajedrez", "/juegos/pacman", "/juegos/carreras", "/estadisticas"):
             with self.subTest(path=path):

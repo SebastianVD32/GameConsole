@@ -5,11 +5,11 @@
 <section class="game-header arcade-header">
   <div><span class="eyebrow">Circuito Neón · 4 pilotos · 3 vueltas</span><h1>Juego de carreras</h1></div>
   <div class="game-header-actions">
-    <a class="secondary-button" href="{{ url_for('web.game', game_id='carreras') }}" target="_blank" rel="noopener">＋ Otra instancia</a>
     <span class="status-pill cyan" id="race-status" role="status">En parrilla</span>
+    <a class="secondary-button" href="{{ url_for('web.game', game_id='carreras') }}" target="_blank" rel="noopener">＋ Abrir otra carrera</a>
     <button class="secondary-button" id="race-pause" type="button" disabled>Ⅱ Pausar</button>
     <button class="secondary-button" id="race-abort" type="button" disabled>Retirarme</button>
-    <button class="danger-button" id="race-restart" type="button" title="Prepara una nueva carrera y registra el abandono de la anterior si estaba en curso.">↻ Nueva carrera</button>
+    <button class="danger-button" id="race-restart" type="button" title="Prepara una nueva carrera y registra el abandono de la anterior si estaba en curso.">↻ Reiniciar</button>
   </div>
 </section>
 <div class="play-layout racing-layout">
