@@ -77,12 +77,20 @@
 
       <main class="page-content">
         {% block content %}{% endblock %}
+        {% if game_id is defined and game_id in games %}
+        <section class="game-stats-summary" data-game-stats="{{ games[game_id].game_id }}" aria-label="Estadísticas del juego en GameStats">
+          <div class="section-heading compact"><div><span class="eyebrow">GameStats</span><h2>Estadísticas del juego</h2></div><a href="{{ url_for('web.statistics') }}">Ver panel completo</a></div>
+          <div class="telemetry-grid" data-game-stats-values></div>
+          <p class="telemetry-note" data-game-stats-status role="status">Consultando GameStats…</p>
+        </section>
+        {% endif %}
       </main>
     </div>
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% if game_id is defined and game_id in games %}<script src="{{ url_for('static', filename='js/game-stats.js') }}"></script>{% endif %}
   {% block scripts %}{% endblock %}
 </body>
 </html>
