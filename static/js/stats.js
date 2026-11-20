@@ -55,7 +55,7 @@
     metric('startedMatches', fmtInt(totals.startedMatches));
     metric('activeMatches', fmtInt(totals.activeMatches));
     metric('acceptedEvents', fmtInt(totals.acceptedEvents));
-    metric('completedMatches', fmtInt(general.completedMatches));
+    metric('completedMatches', fmtInt(general.processedMatches ?? general.completedMatches));
     metric('averageDuration', fmtDuration(general.averageDurationMs));
     metric('totalPlayTime', fmtDuration(general.totalPlayTimeMs));
 
@@ -69,7 +69,7 @@
       errorBox.textContent = ok ? '' : data.errors.join(' · ');
     }
 
-    const analyzedByGame = general.matchesByGame || {};
+    const analyzedByGame = general.processedMatchesByGame || general.matchesByGame || {};
     fillRows(document.querySelector('[data-instances]'), (ingestion?.games || []).map((g) => [
       GAME_NAMES[g.gameId] || g.gameId, fmtInt(g.startedMatches), fmtInt(g.activeMatches),
       fmtInt(g.finishedMatches), fmtInt(g.acceptedEvents), fmtInt(analyzedByGame[g.gameId] ?? 0),
@@ -111,7 +111,8 @@
     ] : [], 2);
     const race = analytics?.games?.RACING;
     fillRows(document.querySelector('[data-game-table="RACING"]'), race ? [
-      ['Partidas analizadas', fmtInt(race.completedMatches)],
+      ['Carreras completadas', fmtInt(race.completedMatches)],
+      ['Carreras abortadas', fmtInt(race.abortedMatches)],
       ['Vuelta más rápida', race.bestLap ? `${fmtMs(race.bestLap.lapTimeMs)} · ${race.bestLap.playerId}` : '—'],
       ['Paradas en boxes', fmtInt(race.totalPitStops)],
       ['Remontadas', fmtInt(race.comebacks)],

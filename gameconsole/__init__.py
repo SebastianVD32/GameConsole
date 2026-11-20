@@ -3,16 +3,26 @@
 from __future__ import annotations
 
 import logging
+import atexit
+import os
 
 from flask import Flask
 
 from .services import ConsoleServices, Settings
+from .arcade import ArcadeRelay
 
 
-def create_app(services: ConsoleServices | None = None, settings: Settings | None = None) -> Flask:
+def create_app(services: ConsoleServices | None = None, settings: Settings | None = None,
+               arcade: ArcadeRelay | None = None) -> Flask:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     app = Flask(__name__, static_folder="../static", template_folder="../templates")
     app.extensions["console"] = services or ConsoleServices.build(settings or Settings.from_env())
+    if arcade is None:
+        arcade = (ArcadeRelay(":memory:", auto_start=False) if services is not None else
+                  ArcadeRelay.build(os.environ.get("GAMECONSOLE_ARCADE_DB", "data/arcade.sqlite3"),
+                                    (settings or Settings.from_env()).ingest_url))
+    app.extensions["arcade"] = arcade
+    atexit.register(arcade.close)
 
     from gamestats import stats as arcade_bridge  # Pac-Man y carreras (navegador → GameStats)
 

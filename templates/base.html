@@ -38,7 +38,7 @@
         <p class="nav-label nav-label-spaced">Partidas activas</p>
         {% for item in active_sessions %}
           {% set meta = games[item.slug] %}
-          <a class="session-link" href="{{ url_for('web.game', game_id=item.slug) }}?partida={{ item.matchId }}">
+            <a class="session-link" href="{{ url_for('web.statistics') ~ '#partidas-en-curso' if item.arcade else url_for('web.game', game_id=item.slug) ~ '?partida=' ~ item.matchId }}">
             <span class="session-dot {{ meta.accent }}"></span>
             <span><strong>{{ meta.short_name }}</strong><small>{{ item.matchId[:14] }} · {{ item.status }}</small></span>
           </a>

@@ -141,3 +141,8 @@ class RacingEvents(GameEvents):
         return self._finished({
             "classification": [{"playerId": pid, "position": pos} for pid, pos in classification],
         })
+
+    def match_aborted(self, reason: str) -> dict:
+        if reason not in ("USER_QUIT", "RESTARTED", "PAGE_CLOSED"):
+            raise ValueError("Motivo de abandono inválido")
+        return self.stream.emit("MATCH_ABORTED", None, {"reason": reason})

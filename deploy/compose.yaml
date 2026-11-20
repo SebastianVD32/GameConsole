@@ -16,6 +16,9 @@ services:
       GAMESTATS_INGEST_URL: http://gamestats-go:8080
       GAMESTATS_INGESTION_URL: http://gamestats-go:8080   # alias del puente arcade (Pac-Man y carreras)
       GAMESTATS_ANALYTICS_URL: http://gamestats-scala:8081
+      GAMECONSOLE_ARCADE_DB: /data/arcade/events.sqlite3
+    volumes:
+      - arcade-events:/data/arcade
     ports:
       - "${GAMECONSOLE_PORT:-5000}:5000"
     depends_on:
@@ -53,4 +56,5 @@ services:
     restart: unless-stopped
 
 volumes:
+  arcade-events:
   results:

@@ -27,12 +27,14 @@ COPY tests ./tests
 RUN python -m unittest discover -s tests -t . -v
 
 FROM base AS runtime
-RUN useradd --system --uid 10001 --no-create-home gameconsole
+RUN useradd --system --uid 10001 --no-create-home gameconsole \
+    && mkdir -p /data/arcade && chown gameconsole /data/arcade
 USER gameconsole
 EXPOSE 5000
 ENV GAMESTATS_INGEST_URL=http://gamestats-go:8080 \
     GAMESTATS_INGESTION_URL=http://gamestats-go:8080 \
-    GAMESTATS_ANALYTICS_URL=http://gamestats-scala:8081
+    GAMESTATS_ANALYTICS_URL=http://gamestats-scala:8081 \
+    GAMECONSOLE_ARCADE_DB=/data/arcade/events.sqlite3
 HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=5 \
     CMD curl --fail --silent http://127.0.0.1:5000/healthz || exit 1
 # Un solo proceso (el registro de partidas vive en memoria) con varios hilos:

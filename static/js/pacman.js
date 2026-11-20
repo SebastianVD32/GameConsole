@@ -66,24 +66,33 @@
     constructor() {
       this.renderer = new PacmanRenderer($('pacman-board'));
       this.delivery = new GameStats.EventDelivery({ storage: sessionStorageSafe, onChange: delivery => this.deliveryStatus(delivery) });
+      this.monitor = new GameStats.DeliveryMonitor(status => {
+        if (status.matchId !== this.game.matchId) return;
+        $('delivery-status').textContent = `${status.delivered} aceptados por GameStats · ${status.pending} pendientes en consola.${status.lastError ? ` ${status.lastError}` : ''}`;
+        $('stats-badge').textContent = status.state === 'DELIVERED' ? 'AL DÍA' : 'PENDIENTE';
+      });
       this.deliveryStatus(this.delivery);
       this.newGame(); this.bind(); this.delivery.flush(); this.pollStats();
       this.statsTimer = setInterval(() => this.pollStats(), 5000);
       this.lastFrame = performance.now(); this.lastHud = 0;
+      this.clock = new GameStats.SimulationClock(dt => this.game.update(dt)); this.clock.start();
       requestAnimationFrame(time => this.frame(time));
     }
     newGame() {
+      this.clock?.reset();
       this.game?.finish('RESTARTED');
       this.game = new Pacman.PacmanGame({ playerId, onEvent: event => this.delivery.enqueue(event) });
       this.lastEventCount = -1; this.refresh();
     }
     play() {
+      this.clock?.reset();
       if (this.game.state === 'ready') this.game.start();
       else if (this.game.state === 'paused') this.game.resume();
       else { this.newGame(); this.game.start(); }
       this.refresh(); $('pacman-board').focus({ preventScroll: true });
     }
     togglePause() {
+      this.clock?.reset();
       if (this.game.state === 'running') this.game.pause();
       else if (this.game.state === 'paused') this.game.resume();
       this.refresh();
@@ -92,7 +101,7 @@
       $('start-game').addEventListener('click', () => this.play());
       $('pause-game').addEventListener('click', () => this.togglePause());
       $('restart-game').addEventListener('click', () => this.newGame());
-      $('retry-events').addEventListener('click', () => { this.delivery.retry(); this.pollStats(); });
+      $('retry-events').addEventListener('click', () => { this.delivery.retry(); this.monitor.retry(this.game.matchId); this.pollStats(); });
       const keys = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', w: 'up', s: 'down', a: 'left', d: 'right' };
       document.addEventListener('keydown', event => {
         if (event.ctrlKey || event.metaKey || event.altKey || event.target.matches('input, textarea, select')) return;
@@ -106,8 +115,7 @@
         });
         button.addEventListener('click', () => this.game.steer(button.dataset.direction));
       });
-      document.addEventListener('visibilitychange', () => { if (document.hidden) { this.game.pause(); this.refresh(); } });
-      window.addEventListener('pagehide', () => { this.game.finish('PAGE_CLOSED'); this.delivery.persist(); });
+      window.addEventListener('pagehide', () => { this.game.finish('PAGE_CLOSED'); this.delivery.persist(); this.delivery.handoff(); });
       window.addEventListener('pageshow', event => { if (event.persisted) this.newGame(); });
       // Warn only while an actual game or unacknowledged events would be lost.
       window.addEventListener('beforeunload', event => {
@@ -123,9 +131,9 @@
     deliveryStatus(delivery) {
       $('delivery-status').textContent = delivery.error
         ? `${delivery.queue.length} eventos pendientes. ${delivery.error}`
-        : `${delivery.sent} confirmados · ${delivery.queue.length} pendientes de envío.`;
+        : `${delivery.sent} guardados en consola · ${delivery.queue.length} pendientes de guardar.`;
       if (!delivery.persistent) $('delivery-status').textContent += ' Almacenamiento no disponible; conserva esta pestaña abierta.';
-      $('stats-badge').textContent = delivery.error ? 'PENDIENTE' : delivery.queue.length ? 'ENVIANDO' : delivery.sent ? 'AL DÍA' : 'LISTO';
+      $('stats-badge').textContent = delivery.error ? 'PENDIENTE' : delivery.queue.length ? 'ENVIANDO' : delivery.sent ? 'GUARDADO' : 'LISTO';
     }
     async pollStats() {
       if (this.polling) return;
@@ -181,8 +189,8 @@
     }
     frame(time) {
       const dt = Math.min((time - this.lastFrame) / 1000, 0.1); this.lastFrame = time;
-      this.game.update(dt); this.renderer.draw(this.game, time, dt);
-      if (time - this.lastHud > 80) { this.refresh(); this.lastHud = time; }
+      this.renderer.draw(this.game, time, dt);
+      if (time - this.lastHud > 80) { this.refresh(); this.lastHud = time; void this.monitor.poll(this.game.matchId); }
       requestAnimationFrame(next => this.frame(next));
     }
   }

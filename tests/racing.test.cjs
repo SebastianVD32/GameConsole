@@ -103,9 +103,26 @@ test('a slower human car loses without blocking rival completion', () => {
 test('abandoning never fabricates a complete result; instances remain independent', () => {
   const a = new RacingGame(), b = new RacingGame(); a.start({ countdown: false });
   a.setInput({ throttle: 1 }); a.update(0.2); a.abandon(); a.update(1);
-  assert.equal(a.state, 'abandoned'); assert.equal(a.events.length, 1);
+  assert.equal(a.state, 'abandoned'); assert.equal(a.events.length, 2);
+  assert.equal(a.events.at(-1).type, 'MATCH_ABORTED');
+  assert.equal(a.events.at(-1).playerId, null);
+  assert.deepEqual(a.events.at(-1).data, { reason: 'USER_QUIT' });
   assert.equal(b.events.length, 0); assert.equal(b.player.distance, 0);
   assert.notEqual(a.matchId, b.matchId); assert.notEqual(a.circuit.samples, b.circuit.samples);
+});
+
+test('abort reasons close a started race exactly once; countdown has no remote match', () => {
+  for (const reason of ['USER_QUIT', 'RESTARTED', 'PAGE_CLOSED']) {
+    const game = new RacingGame(); game.start({ countdown: false });
+    game.pause(); game.abandon(reason); game.abandon(reason); game.update(1);
+    assert.equal(game.events.length, 2);
+    assert.deepEqual(game.events.at(-1).data, { reason });
+    assert.equal(game.events.at(-1).sequence, 2);
+  }
+  const early = new RacingGame(); early.start(); early.abandon();
+  assert.equal(early.events.length, 0);
+  const complete = completeRace(); const count = complete.events.length;
+  complete.abandon(); assert.equal(complete.events.length, count);
 });
 
 test('physics is independent of animation frame frequency', () => {

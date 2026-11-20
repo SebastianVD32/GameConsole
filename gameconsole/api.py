@@ -7,6 +7,7 @@ from flask import Blueprint, current_app, jsonify, request
 from .games.chess import ChessMatch, MatchError
 from .services import ConsoleServices
 from .stats import UpstreamError
+from .arcade import EventConflict
 
 api = Blueprint("api", __name__)
 
@@ -80,7 +81,49 @@ def resign_chess_match(match_id: str):
 @api.get("/partidas")
 def list_sessions():
     """Partidas que ejecuta esta consola (vista operativa, no estadística)."""
-    return jsonify([s.summary() for s in services().registry.sessions()])
+    sessions = [s.summary() for s in services().registry.sessions()]
+    sessions.extend(current_app.extensions["arcade"].summaries())
+    return jsonify(sorted(sessions, key=lambda s: s["createdAt"], reverse=True))
+
+
+@api.post("/arcade/events")
+def save_arcade_event():
+    request.max_content_length = 16384
+    event = request.get_json(silent=True)
+    try:
+        return jsonify(current_app.extensions["arcade"].append(event)), 202
+    except EventConflict as error:
+        return problem(409, str(error))
+    except (ValueError, TypeError) as error:
+        return problem(400, str(error))
+
+
+@api.post("/arcade/events/batch")
+def save_arcade_batch():
+    request.max_content_length = 512 * 1024
+    events = request.get_json(silent=True)
+    try:
+        current_app.extensions["arcade"].append_batch(events)
+        return jsonify(accepted=True, persisted=True), 202
+    except EventConflict as error:
+        return problem(409, str(error))
+    except (ValueError, TypeError) as error:
+        return problem(400, str(error))
+
+
+@api.get("/arcade/partidas/<match_id>/envio")
+def arcade_delivery(match_id):
+    status = current_app.extensions["arcade"].status(match_id)
+    return (jsonify(status), 200) if status else problem(404, "Partida arcade no encontrada")
+
+
+@api.post("/arcade/partidas/<match_id>/reintentar")
+def retry_arcade_delivery(match_id):
+    relay = current_app.extensions["arcade"]
+    if relay.status(match_id) is None:
+        return problem(404, "Partida arcade no encontrada")
+    relay.retry(match_id)
+    return jsonify(relay.status(match_id))
 
 
 @api.get("/estadisticas")
