@@ -161,6 +161,10 @@ jobs:
           cp -R deploy/. delivery/
           printf 'GAMECONSOLE_TAG=%s\nIMAGE_OWNER=%s\n' "$GAMECONSOLE_TAG" "$IMAGE_OWNER" > delivery/version.env
 
+      - name: Preparar imágenes para Azure sin credenciales de registro
+        run: |
+          docker save -o delivery/images.tar "ghcr.io/$IMAGE_OWNER/gameconsole:$GAMECONSOLE_TAG" "ghcr.io/$IMAGE_OWNER/gameconsole-gamestats-go:$GAMECONSOLE_TAG" "ghcr.io/$IMAGE_OWNER/gameconsole-gamestats-scala:$GAMECONSOLE_TAG"
+
       - name: Guardar paquete de despliegue
         uses: actions/upload-artifact@v7
         with:

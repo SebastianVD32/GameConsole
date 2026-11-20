@@ -1,0 +1,36 @@
+name: Deploy Azure
+on:
+  workflow_run:
+    workflows: [CI/CD GameConsole]
+    types: [completed]
+    branches: [main]
+permissions:
+  contents: read
+  actions: read
+  packages: read
+  id-token: write
+concurrency:
+  group: azure-production
+  cancel-in-progress: false
+jobs:
+  deploy:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event != 'pull_request'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://gameconsole-nkx6wjmnfl4di.eastus.cloudapp.azure.com
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Transferir y desplegar la versión comprobada
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN: ${{ github.event.workflow_run.id }}
+          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: python3 scripts/deploy_azure.py
