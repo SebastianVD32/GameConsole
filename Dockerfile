@@ -17,6 +17,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app.py gamestats.py ./
+COPY gunicorn.conf.py ./
 COPY gameconsole ./gameconsole
 COPY templates ./templates
 COPY static ./static
@@ -36,7 +37,7 @@ ENV GAMESTATS_INGEST_URL=http://gamestats-go:8080 \
     GAMESTATS_ANALYTICS_URL=http://gamestats-scala:8081 \
     GAMECONSOLE_ARCADE_DB=/data/arcade/events.sqlite3
 HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=5 \
-    CMD curl --fail --silent http://127.0.0.1:5000/healthz || exit 1
+    CMD curl --fail --silent "http://127.0.0.1:${PORT:-5000}/healthz" || exit 1
 # Un solo proceso (el registro de partidas vive en memoria) con varios hilos:
 # cada pestaña/partida se atiende en paralelo y la IA corre en su propio grupo de hilos.
-CMD ["gunicorn", "--workers", "1", "--threads", "16", "--bind", "0.0.0.0:5000", "--access-logfile", "-", "app:app"]
+CMD ["gunicorn", "--config", "gunicorn.conf.py", "app:app"]

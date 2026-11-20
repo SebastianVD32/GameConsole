@@ -502,3 +502,6 @@ button:disabled { opacity: .4; cursor: default; }
   .section-tabs { gap: 3px; padding: 4px; overflow: hidden; }
   .section-tabs a { min-width: 0; padding: 9px 4px; font-size: 9px; }
 }
+
+.game-stats-summary { margin-top: 1.5rem; padding: 1.25rem; border: 1px solid var(--border, #303344); border-radius: 16px; }
+.game-stats-summary .telemetry-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; }

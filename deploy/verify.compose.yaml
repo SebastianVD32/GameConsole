@@ -1,0 +1,8 @@
+# Solo para pruebas locales/CI: GameStats permanece privado en el despliegue normal.
+services:
+  gamestats-go:
+    ports:
+      - "127.0.0.1:8080:8080"
+  gamestats-scala:
+    ports:
+      - "127.0.0.1:8081:8081"
