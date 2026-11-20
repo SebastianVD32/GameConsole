@@ -88,7 +88,7 @@ La URL pública será `https://NOMBRE_DNS_DEVUELTO_POR_AZURE`.
 
 GitHub publica las imágenes comprobadas. Para actualizar Azure, descargar las tres
 con la misma etiqueta SHA, cambiar `GAMECONSOLE_TAG` en `.env` y volver a ejecutar
-Compose. El workflow no crea recursos Azure ni reinicia la VM automáticamente.
+Compose. El workflow `Deploy Azure` actualiza la aplicación automáticamente después de que CI/CD termine correctamente en `main`. Usa OIDC con la identidad `gameconsole-github-deploy`, limitada a ejecutar comandos en la VM. Transfiere un paquete temporal con las tres imágenes, espera la salud de Compose y recupera la versión anterior si falla. No crea nuevas máquinas ni cambia su tamaño.
 Esto permite aplicar las actualizaciones cuando no haya partidas en curso.
 Para volver a una versión anterior, seleccionar su etiqueta SHA y ejecutar Compose.
 
