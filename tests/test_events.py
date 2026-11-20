@@ -67,6 +67,19 @@ class EventStreamTest(unittest.TestCase):
         self.assertEqual(race_sink.events[-1]["data"]["classification"][1], {"playerId": "d2", "position": 2})
 
 
+    def test_racing_abort_payload_and_reason_validation(self):
+        sink = MemorySink()
+        race = RacingEvents(EventStream("RACING", "1.0", "abort", sink))
+        for reason in ("USER_QUIT", "RESTARTED", "PAGE_CLOSED"):
+            result = race.match_aborted(reason)
+            self.assertEqual(result["type"], "MATCH_ABORTED")
+            self.assertIsNone(result["playerId"])
+            self.assertEqual(result["data"], {"reason": reason})
+        with self.assertRaises(ValueError):
+            race.match_aborted("OTHER")
+        self.assertEqual(len(sink.events), 3)
+
+
 class RecordingTransport:
     def __init__(self, responses=None, delay_for=None):
         self.received: list[dict] = []

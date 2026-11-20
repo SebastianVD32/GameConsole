@@ -54,7 +54,7 @@
     <div class="activity-list">
       {% for item in active_sessions %}
       {% set meta = games[item.slug] %}
-      <a class="activity-item" href="{{ url_for('web.game', game_id=item.slug) }}?partida={{ item.matchId }}">
+      <a class="activity-item" href="{{ url_for('web.statistics') ~ '#partidas-en-curso' if item.arcade else url_for('web.game', game_id=item.slug) ~ '?partida=' ~ item.matchId }}">
         <span class="activity-icon {{ meta.accent }}">{{ meta.icon }}</span>
         <span><strong>{{ meta.name }}</strong><small>{{ item.status }}</small></span>
         <time>{{ item.matchId[6:14] }}</time>

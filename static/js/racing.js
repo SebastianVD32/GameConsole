@@ -79,14 +79,21 @@
     constructor() {
       this.keys = new Set(); this.touch = new Map(); this.statsFor = null; this.lastStats = 0;
       this.delivery = new GameStats.EventDelivery({ storage, storageKey: 'gameconsole.racing.pending.v1', onChange: delivery => this.deliveryStatus(delivery) });
+      this.monitor = new GameStats.DeliveryMonitor(status => {
+        if (status.matchId !== this.game.matchId) return;
+        text('race-delivery', `${status.delivered} aceptados por GameStats · ${status.pending} pendientes en consola.${status.lastError ? ` ${status.lastError}` : ''}`);
+        text('race-sync', status.state === 'DELIVERED' ? 'AL DÍA' : 'PENDIENTE');
+      });
       this.deliveryStatus(this.delivery); this.newGame(); this.bind(); this.delivery.flush();
       this.lastFrame = performance.now(); this.lastHud = 0;
+      this.clock = new GameStats.SimulationClock(dt => { this.readInput(); this.game.update(dt); }); this.clock.start();
       requestAnimationFrame(time => this.frame(time));
     }
     clearInput() { this.keys.clear(); this.touch.clear(); this.game?.setInput({}); }
     newGame() {
+      this.clock?.reset();
       const interrupted = this.game?.events.length && !['finished', 'abandoned'].includes(this.game.state);
-      this.game?.abandon(); this.clearInput();
+      this.game?.abandon('RESTARTED'); this.clearInput();
       this.game = new Racing.RacingGame({ playerId, onEvent: event => this.delivery.enqueue(event) });
       this.renderer = new CircuitRenderer($('racing-board'), this.game.circuit);
       this.statsFor = null; this.lastStats = 0; this.lastEventCount = -1;
@@ -99,14 +106,16 @@
       text('race-best-official', '—'); text('race-position-official', '—');
       text('race-analytics-status', 'GameStats procesa el resultado cuando todos completan las tres vueltas.');
       this.refresh();
-      if (interrupted) showToast('Carrera interrumpida. GameStats solo procesa carreras completas.');
+      if (interrupted) showToast('Carrera anterior abortada. Su cierre se enviará a GameStats.');
     }
     play() {
+      this.clock?.reset();
       if (this.game.state === 'paused') this.game.resume();
       else { if (this.game.state !== 'ready') this.newGame(); this.game.start(); }
       this.clearInput(); this.refresh(); $('racing-board').focus({ preventScroll: true });
     }
     pause() {
+      this.clock?.reset();
       if (this.game.state === 'paused') this.game.resume(); else this.game.pause();
       this.clearInput(); this.refresh();
     }
@@ -114,7 +123,8 @@
       $('race-start').addEventListener('click', () => this.play());
       $('race-pause').addEventListener('click', () => this.pause());
       $('race-restart').addEventListener('click', () => this.newGame());
-      $('race-retry').addEventListener('click', () => { this.delivery.retry(); this.pollResult(true); });
+      $('race-abort').addEventListener('click', () => { this.game.abandon('USER_QUIT'); this.clearInput(); this.refresh(); });
+      $('race-retry').addEventListener('click', () => { this.delivery.retry(); this.monitor.retry(this.game.matchId); this.pollResult(true); });
       const keys = { ArrowUp: 'throttle', w: 'throttle', ArrowDown: 'brake', s: 'brake', ArrowLeft: 'left', a: 'left', ArrowRight: 'right', d: 'right' };
       const keyName = event => event.key.length === 1 ? event.key.toLowerCase() : event.key;
       document.addEventListener('keydown', event => {
@@ -140,9 +150,9 @@
         button.addEventListener('blur', () => this.keys.delete(`button-${button.dataset.drive}`));
       });
       this.controls = keys;
-      window.addEventListener('blur', () => { this.game.pause(); this.clearInput(); this.refresh(); });
-      document.addEventListener('visibilitychange', () => { if (document.hidden) { this.game.pause(); this.clearInput(); this.refresh(); } });
-      window.addEventListener('pagehide', () => { this.game.abandon(); this.clearInput(); this.delivery.persist(); });
+      window.addEventListener('blur', () => this.clearInput());
+      document.addEventListener('visibilitychange', () => { if (document.hidden) this.clearInput(); });
+      window.addEventListener('pagehide', () => { this.game.abandon('PAGE_CLOSED'); this.clearInput(); this.delivery.persist(); this.delivery.handoff(); });
       window.addEventListener('pageshow', event => { if (event.persisted) this.newGame(); });
       $('race-export').addEventListener('click', () => {
         const blob = new Blob([this.game.events.map(e => JSON.stringify(e)).join('\n') + '\n'], { type: 'application/x-ndjson' });
@@ -159,21 +169,27 @@
       document.querySelectorAll('[data-drive]').forEach(button => button.classList.toggle('is-held', held.has(button.dataset.drive)));
     }
     deliveryStatus(delivery) {
-      text('race-delivery', delivery.error ? `${delivery.queue.length} pendientes. ${delivery.error}` : `${delivery.sent} confirmados · ${delivery.queue.length} pendientes.`);
+      text('race-delivery', delivery.error ? `${delivery.queue.length} pendientes. ${delivery.error}` : `${delivery.sent} guardados en consola · ${delivery.queue.length} pendientes de guardar.`);
       if (!delivery.persistent) text('race-delivery', $('race-delivery').textContent + ' Sin almacenamiento; conserva esta pestaña abierta.');
-      text('race-sync', delivery.error ? 'PENDIENTE' : delivery.queue.length ? 'ENVIANDO' : delivery.sent ? 'AL DÍA' : 'LISTO');
+      text('race-sync', delivery.error ? 'PENDIENTE' : delivery.queue.length ? 'ENVIANDO' : delivery.sent ? 'GUARDADO' : 'LISTO');
     }
     async pollResult(force = false) {
       const game = this.game;
-      if (game.state !== 'finished' || this.polling || this.statsFor === game.matchId || (!force && Date.now() - this.lastStats < 5000)) return;
+      if (!['finished', 'abandoned'].includes(game.state) || !game.events.length || this.polling || this.statsFor === game.matchId || (!force && Date.now() - this.lastStats < 5000)) return;
       this.polling = true; this.lastStats = Date.now();
       try {
         const response = await fetch(`/api/gamestats/matches/${encodeURIComponent(game.matchId)}`, { signal: AbortSignal.timeout(7000) });
         if (this.game !== game) return;
-        if (response.status === 404) { text('race-analytics-status', 'Esperando a que GameStats procese la carrera completa…'); return; }
+        if (response.status === 404) { text('race-analytics-status', 'Esperando a que GameStats procese el cierre de la carrera…'); return; }
         if (!response.ok) throw Error('Resultado oficial no disponible. Inicia GameStats y reintenta la conexión.');
         const result = await response.json();
         if (this.game !== game) return;
+        if (result.status === 'ABORTED' && result.gameId === 'RACING' && result.matchId === game.matchId) {
+          const reasons = { USER_QUIT: 'retiro voluntario', RESTARTED: 'reinicio', PAGE_CLOSED: 'cierre de pestaña' };
+          text('race-best-official', '—'); text('race-position-official', '—');
+          text('race-analytics-status', `GameStats procesó el abandono por ${reasons[result.reason] || result.reason}. Sin ganador ni clasificación.`);
+          this.statsFor = game.matchId; return;
+        }
         const own = result.drivers?.find(driver => driver.playerId === game.playerId);
         if (!own || result.gameId !== 'RACING' || result.matchId !== game.matchId) throw Error('GameStats devolvió un resultado inesperado.');
         text('race-best-official', formatTime(own.bestLapTimeMs)); text('race-position-official', `${own.finalPosition}º`);
@@ -192,9 +208,11 @@
       $('race-progress').value = progress; text('race-progress-label', `${Math.floor(progress)} % de carrera`);
       const active = ['countdown', 'running', 'paused', 'finishing'].includes(game.state);
       $('race-pause').disabled = !active; text('race-pause', game.state === 'paused' ? '▶ Continuar' : 'Ⅱ Pausar');
+      $('race-abort').disabled = !active;
       $('race-export').disabled = !game.events.length;
       let feedback = 'Mantén ↑ o W para acelerar.';
       if (game.state === 'paused') feedback = 'Partida pausada. Continúa cuando estés listo.';
+      else if (game.state === 'abandoned') feedback = 'Carrera abortada. GameStats conserva el progreso sin asignar un ganador.';
       else if (game.state === 'finished') feedback = `Carrera terminada: ${game.playerPosition}º puesto.`;
       else if (player.finished) feedback = 'Ya cruzaste la meta. Los demás pilotos siguen en carrera.';
       else if (Math.abs(player.lane) > game.circuit.halfWidth) feedback = 'Fuera de pista. Vuelve hacia el centro para recuperar velocidad.';
@@ -211,7 +229,7 @@
         paused: ['Una parada en el camino', 'La carrera y el cronómetro están pausados.', 'Continuar →'],
         finished: [game.playerPosition === 1 ? '¡Lo más alto del podio!' : `Llegaste en ${game.playerPosition}º lugar`,
           `Tres vueltas en ${formatTime(player.finishTimeMs)}. ${game.playerPosition === 1 ? 'El circuito es tuyo.' : 'Cada curva es una nueva oportunidad.'}`, 'Volver a correr →'],
-        abandoned: ['Carrera interrumpida', 'Una carrera nueva te espera en la parrilla.', 'Nueva carrera →'],
+        abandoned: ['Carrera abortada', 'El progreso se envía a GameStats. Este cierre no cuenta como una carrera completada ni asigna ganador.', 'Nueva carrera →'],
       };
       if (overlays[game.state]) {
         const [title, description, action] = overlays[game.state];
@@ -237,9 +255,8 @@
       }
     }
     frame(time) {
-      const dt = Math.min((time - this.lastFrame) / 1000, 0.1); this.lastFrame = time;
-      this.readInput(); this.game.update(dt); this.renderer.draw(this.game, time);
-      if (time - this.lastHud > 80) { this.refresh(); this.lastHud = time; void this.pollResult(); }
+      this.renderer.draw(this.game, time);
+      if (time - this.lastHud > 80) { this.refresh(); this.lastHud = time; void this.pollResult(); void this.monitor.poll(this.game.matchId); }
       requestAnimationFrame(next => this.frame(next));
     }
   }

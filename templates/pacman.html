@@ -2,9 +2,10 @@
 {% block title %}Pac-Man · GameConsole{% endblock %}
 {% block breadcrumb %}<a href="{{ url_for('web.dashboard') }}">Consola</a> / <span>Juegos</span> / Pac-Man{% endblock %}
 {% block content %}
-<section class="game-header">
+<section class="game-header arcade-header">
   <div><span class="eyebrow">Arcade individual · Un nivel, tres vidas</span><h1>Pac-Man</h1></div>
   <div class="game-header-actions">
+    <a class="secondary-button" href="{{ url_for('web.game', game_id='pacman') }}" target="_blank" rel="noopener">＋ Otra instancia</a>
     <span class="status-pill amber" id="match-status" role="status">Listo para jugar</span>
     <button class="secondary-button" id="pause-game" type="button" disabled>Ⅱ Pausar</button>
     <button class="danger-button" id="restart-game" type="button">↻ Nueva partida</button>
@@ -29,7 +30,7 @@
         </div>
       </div>
       <div class="power-meter"><span id="power-label">Recoge un poder para atrapar fantasmas</span><progress id="power-progress" max="8" value="0" aria-label="Segundos de poder restantes"></progress></div>
-      <p class="control-hint" id="pacman-help"><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> o WASD · <kbd>P</kbd> pausa</p>
+      <p class="control-hint" id="pacman-help"><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> o WASD · <kbd>P</kbd> pausa<br>La partida continúa al cambiar de pestaña. Pausa antes de salir si lo necesitas.</p>
       <div class="direction-pad" aria-label="Controles táctiles">
         <button type="button" data-direction="up" aria-label="Mover arriba">↑</button>
         <button type="button" data-direction="left" aria-label="Mover a la izquierda">←</button>

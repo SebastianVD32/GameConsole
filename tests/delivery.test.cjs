@@ -1,6 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { EventDelivery } = require('../static/js/gamestats');
+const { SimulationClock } = require('../static/js/gamestats');
 const response = (status, body) => ({ status, ok: status >= 200 && status < 300, json: async () => body });
 const settle = () => new Promise(resolve => setImmediate(resolve));
 const event = (id, matchId, sequence) => ({ eventId: id, matchId, sequence });
@@ -61,4 +62,47 @@ test('Pac-Man and racing persist to separate queues', async () => {
   assert.notEqual(pacman.key, racing.key);
   assert.equal(JSON.parse(saved.get(pacman.key))[0].eventId, 'pac');
   assert.equal(JSON.parse(saved.get(racing.key))[0].eventId, 'race');
+});
+
+test('durable console acknowledgment releases the browser queue', async () => {
+  const urls = [];
+  const delivery = new EventDelivery({ fetcher: async url => { urls.push(url); return response(202, { accepted: true, persisted: true }); } });
+  delivery.enqueue(event('stable', 'one', 1)); await settle();
+  assert.deepEqual(urls, ['/api/arcade/events']); assert.equal(delivery.queue.length, 0);
+});
+
+test('page-close handoff sends the original queued events without claiming an acknowledgment', async () => {
+  const batches = [];
+  const delivery = new EventDelivery({ fetcher: async () => response(503, {}), schedule: () => {} });
+  delivery.enqueue(event('start', 'one', 1)); delivery.enqueue(event('finish', 'one', 2)); await settle();
+  delivery.handoff((url, blob) => { batches.push({ url, blob }); return true; });
+  assert.equal(batches[0].url, '/api/arcade/events/batch');
+  assert.deepEqual(JSON.parse(await batches[0].blob.text()), delivery.queue);
+  assert.equal(delivery.queue.length, 2);
+});
+
+test('background simulation advances without animation frames and retains delayed timer work', () => {
+  let milliseconds = 0, advanced = 0;
+  const clock = new SimulationClock(dt => { assert.ok(dt <= 0.05); advanced += dt; }, { now: () => milliseconds });
+  milliseconds = 5000; clock.pulse(); assert.ok(Math.abs(advanced - 2) < 0.0001);
+  clock.pulse(); clock.pulse(); assert.ok(Math.abs(advanced - 5) < 0.0001);
+  milliseconds += 10000; clock.reset(); clock.pulse(); assert.ok(Math.abs(advanced - 5) < 0.0001);
+});
+
+test('Pac-Man and racing keep independent live simulations without requestAnimationFrame', () => {
+  const { PacmanGame } = require('../static/js/pacman-engine');
+  const { RacingGame } = require('../static/js/racing-engine');
+  const pacman = new PacmanGame(), racing = new RacingGame();
+  pacman.start(); racing.start({ countdown: false });
+  let milliseconds = 0;
+  const pacClock = new SimulationClock(dt => pacman.update(dt), { now: () => milliseconds });
+  const raceClock = new SimulationClock(dt => racing.update(dt), { now: () => milliseconds });
+  for (let i = 0; i < 30; i++) { milliseconds += 100; pacClock.pulse(); raceClock.pulse(); }
+  assert.ok(pacman.elapsed > 2.9 && racing.elapsed > 2.9);
+  const pausedAt = pacman.elapsed; pacman.pause();
+  for (let i = 0; i < 10; i++) { milliseconds += 100; pacClock.pulse(); raceClock.pulse(); }
+  assert.equal(pacman.elapsed, pausedAt); assert.ok(racing.elapsed > 3.9);
+  assert.notEqual(pacman.matchId, racing.matchId);
+  assert.ok(pacman.events.every(e => e.matchId === pacman.matchId));
+  assert.ok(racing.events.every(e => e.matchId === racing.matchId));
 });

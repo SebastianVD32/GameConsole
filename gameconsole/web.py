@@ -12,7 +12,9 @@ web = Blueprint("web", __name__)
 
 def _context(**extra):
     services = current_app.extensions["console"]
-    active = [s.summary() for s in services.registry.sessions() if not s.is_finished][:6]
+    active = [s.summary() for s in services.registry.sessions() if not s.is_finished]
+    active.extend(s for s in current_app.extensions["arcade"].summaries() if not s["finished"])
+    active = sorted(active, key=lambda s: s["createdAt"], reverse=True)[:6]
     return {"games": GAMES, "active_sessions": active, **extra}
 
 

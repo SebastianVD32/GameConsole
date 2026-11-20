@@ -362,6 +362,8 @@ button:disabled { opacity: .4; cursor: default; }
 
 /* Circuit racing keeps the shared console shell and cyan game accent. */
 .racing-layout { grid-template-columns: minmax(0, 1fr) 300px; }
+.arcade-header { flex-wrap: wrap; gap: 16px; }
+.arcade-header .game-header-actions { flex-wrap: wrap; }
 .racing-layout .play-stage { min-height: auto; }
 .circuit-game { padding: 24px; }
 .circuit-hud { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0 0 22px; }

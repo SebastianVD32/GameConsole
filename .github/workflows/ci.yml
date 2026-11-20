@@ -12,7 +12,7 @@ on:
       gamestats_ref:
         description: "Rama, tag o commit de GameStats para la integración"
         required: false
-        default: main
+        default: ""
 
 permissions:
   contents: read
@@ -22,7 +22,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  GAMESTATS_REF: ${{ inputs.gamestats_ref || vars.GAMESTATS_REF || 'main' }}
+  # Minimum revision supporting RACING MATCH_ABORTED in both Go and Scala.
+  GAMESTATS_REF: ${{ inputs.gamestats_ref || vars.GAMESTATS_REF || '6243151d7c82919720742056f15a22f2d372482e' }}
 
 jobs:
   tests:

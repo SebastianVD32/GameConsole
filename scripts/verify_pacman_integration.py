@@ -35,6 +35,7 @@ def main(test_file="tests/gamestats.integration.cjs", game_path="/juegos/pacman"
     processes = []
     flags = {"creationflags": subprocess.CREATE_NO_WINDOW} if os.name == "nt" else {}
     with tempfile.TemporaryDirectory(prefix="gameconsole-integration-") as tmp:
+        env['GAMECONSOLE_ARCADE_DB'] = str(Path(tmp) / 'arcade.sqlite3')
         with open(Path(tmp) / "services.log", "w+", encoding="utf-8") as log:
             try:
                 binary = Path(tmp) / ("gamestats.exe" if os.name == "nt" else "gamestats")

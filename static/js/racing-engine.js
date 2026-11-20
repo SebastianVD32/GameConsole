@@ -140,10 +140,12 @@
       this.resumeState = this.state; this.state = 'paused'; this.setInput({});
     }
     resume() { if (this.state === 'paused') { this.state = this.resumeState; this.setInput({}); } }
-    abandon() {
+    abandon(reason = 'USER_QUIT') {
       if (['finished', 'abandoned'].includes(this.state)) return;
+      if (!['USER_QUIT', 'RESTARTED', 'PAGE_CLOSED'].includes(reason)) throw Error('Invalid abort reason');
       this.state = 'abandoned'; this.setInput({});
-      // GameStats RACING has no DNF/cancel event. Never fabricate unfinished laps or a final result.
+      this.abortReason = reason;
+      if (this.events.length) this.emit('MATCH_ABORTED', { reason });
     }
     standings() {
       return [...this.cars].sort((a, b) => {

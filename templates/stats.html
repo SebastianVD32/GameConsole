@@ -7,7 +7,7 @@
   <div>
     <span class="eyebrow">Panel de control · datos de GameStats</span>
     <h1>Estadísticas en tiempo real</h1>
-    <p>Todos los valores se consultan a GameStats: el servicio Go informa las instancias y el progreso de las partidas en curso, y el servicio Scala calcula las estadísticas de las partidas finalizadas. La consola no recalcula ninguna métrica.</p>
+    <p>Go informa las instancias y el progreso en curso. Scala procesa las partidas al terminar y distingue las carreras completadas de las abortadas. El panel consulta GameStats cada 2,5 segundos.</p>
   </div>
   <div class="sync-box">
     <span class="live-badge" data-metric="liveBadge">SYNC</span>
@@ -23,7 +23,7 @@
   <div class="metrics-strip metrics-6">
     <article><span>Instancias iniciadas</span><strong data-metric="startedMatches">—</strong><small>Go · MATCH_STARTED</small></article>
     <article><span>Partidas activas</span><strong data-metric="activeMatches">—</strong><small>Go · en curso</small></article>
-    <article><span>Partidas analizadas</span><strong data-metric="completedMatches">—</strong><small>Scala · finalizadas</small></article>
+    <article><span>Partidas analizadas</span><strong data-metric="completedMatches">—</strong><small>Scala · cierres procesados</small></article>
     <article><span>Eventos aceptados</span><strong data-metric="acceptedEvents">—</strong><small>Go · validados</small></article>
     <article><span>Duración promedio</span><strong data-metric="averageDuration">—</strong><small>Scala</small></article>
     <article><span>Tiempo total jugado</span><strong data-metric="totalPlayTime">—</strong><small>Scala</small></article>
@@ -32,7 +32,7 @@
   <div class="panel table-panel">
     <h3>Instancias por juego</h3>
     <table class="data-table">
-      <thead><tr><th>Juego</th><th>Iniciadas</th><th>Activas</th><th>Finalizadas</th><th>Eventos aceptados</th><th>Analizadas (Scala)</th></tr></thead>
+      <thead><tr><th>Juego</th><th>Iniciadas</th><th>Activas</th><th>Cerradas (Go)</th><th>Eventos aceptados</th><th>Analizadas (Scala)</th></tr></thead>
       <tbody data-instances><tr><td colspan="6" class="muted">Sin datos todavía</td></tr></tbody>
     </table>
   </div>
@@ -86,7 +86,7 @@
   <div class="panel table-panel">
     <table class="data-table">
       <thead><tr><th>Partida</th><th>Juego</th><th>Eventos</th><th>Progreso</th><th>Último evento</th></tr></thead>
-      <tbody data-active-matches><tr><td colspan="5" class="muted">Sin partidas activas</td></tr></tbody>
+      <tbody id="partidas-en-curso" data-active-matches><tr><td colspan="5" class="muted">Sin partidas activas</td></tr></tbody>
     </table>
   </div>
 </section>
