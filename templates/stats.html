@@ -18,7 +18,14 @@
 
 <div class="stats-errors" data-stats-errors hidden></div>
 
-<section class="stats-section">
+<nav class="section-tabs" aria-label="Secciones de estadísticas">
+  <a href="#resumen-general">General</a>
+  <a href="#estadisticas-ajedrez">Ajedrez</a>
+  <a href="#estadisticas-arcade">Arcade</a>
+  <a href="#partidas-activas">En vivo</a>
+</nav>
+
+<section class="stats-section" id="resumen-general">
   <div class="section-heading"><div><span class="eyebrow">Generales</span><h2>Todos los juegos</h2></div></div>
   <div class="metrics-strip metrics-6">
     <article><span>Instancias iniciadas</span><strong data-metric="startedMatches">—</strong><small>Go · MATCH_STARTED</small></article>
@@ -38,7 +45,7 @@
   </div>
 </section>
 
-<section class="stats-section">
+<section class="stats-section" id="estadisticas-ajedrez">
   <div class="section-heading"><div><span class="eyebrow">Por juego</span><h2>Ajedrez</h2></div><span class="status-pill violet">CHESS</span></div>
   <div class="metrics-strip metrics-6">
     <article><span>Partidas analizadas</span><strong data-chess="completedMatches">—</strong><small>finalizadas</small></article>
@@ -67,7 +74,7 @@
   </div>
 </section>
 
-<section class="stats-section">
+<section class="stats-section" id="estadisticas-arcade">
   <div class="section-heading"><div><span class="eyebrow">Por juego</span><h2>Pac-Man y Carreras</h2></div></div>
   <div class="stats-columns">
     <div class="panel table-panel">

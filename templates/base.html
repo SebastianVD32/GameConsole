@@ -64,6 +64,15 @@
       <header class="topbar">
         <button class="icon-button menu-button" id="menu-button" type="button" aria-label="Abrir menú" aria-controls="sidebar" aria-expanded="false">☰</button>
         <div class="breadcrumb">{% block breadcrumb %}<span>Consola</span> / Resumen{% endblock %}</div>
+        {% if page == 'games' %}
+        <nav class="game-switcher" aria-label="Cambiar de juego">
+          {% for id, item in games.items() %}
+          <a class="game-switch {{ item.accent }} {{ 'is-active' if game_id == id else '' }}" href="{{ url_for('web.game', game_id=id) }}" aria-current="{{ 'page' if game_id == id else 'false' }}">
+            <span aria-hidden="true">{{ item.icon }}</span><strong>{{ item.short_name }}</strong>
+          </a>
+          {% endfor %}
+        </nav>
+        {% endif %}
       </header>
 
       <main class="page-content">
