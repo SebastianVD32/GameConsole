@@ -320,6 +320,7 @@ a.activity-item { text-decoration: none; }
   .breadcrumb { flex: 1; margin-left: 12px; }
   .dashboard-grid, .play-layout { grid-template-columns: 1fr; }
   .activity-panel, .telemetry { position: static; }
+  .dashboard-grid .activity-panel { margin-top: 0; }
   .play-stage { min-height: 650px; }
 }
 @media (max-width: 700px) {
@@ -447,6 +448,7 @@ button:disabled { opacity: .4; cursor: default; }
 .dashboard-grid { margin-bottom: 34px; }
 .dashboard-grid .library-panel { padding: 0; border: 0; background: transparent; box-shadow: none; }
 .dashboard-grid .activity-panel { padding: 18px; }
+.dashboard-grid .activity-panel { margin-top: 63px; }
 .dashboard-overview { padding-top: 4px; }
 .overview-heading { align-items: center; margin-bottom: 14px; }
 .text-link { color: #8fa0b2; font-size: 11px; font-weight: 600; }.text-link:hover { color: var(--cyan); }
