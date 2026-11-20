@@ -8,7 +8,7 @@
     <h1>¿Qué quieres jugar hoy?</h1>
     <p>Cada partida es una instancia independiente con su propio identificador y sus propios eventos. Abre varias en distintas pestañas: GameStats las distingue por su <code>matchId</code>.</p>
   </div>
-  <a class="primary-button" href="{{ url_for('web.game', game_id='ajedrez') }}"><span>＋</span> Nueva partida de ajedrez</a>
+  <a class="primary-button" href="#game-library"><span>＋</span> Elegir un juego</a>
 </section>
 
 <section class="metrics-strip" aria-label="Resumen de GameStats" data-live-summary>
@@ -50,8 +50,8 @@
   </section>
 
   <aside class="panel activity-panel">
-    <div class="section-heading compact"><div><span class="eyebrow">En esta consola</span><h2>Partidas activas</h2></div><span class="live-badge">LIVE</span></div>
-    <div class="activity-list">
+    <div class="section-heading compact"><div><span class="eyebrow">GameStats</span><h2>Partidas activas</h2></div><span class="live-badge">LIVE</span></div>
+    <div class="activity-list" data-active-sessions data-variant="cards" aria-live="polite">
       {% for item in active_sessions %}
       {% set meta = games[item.slug] %}
       <a class="activity-item" href="{{ url_for('web.statistics') ~ '#partidas-en-curso' if item.arcade else url_for('web.game', game_id=item.slug) ~ '?partida=' ~ item.matchId }}">

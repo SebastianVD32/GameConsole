@@ -58,9 +58,9 @@ a { color: inherit; text-decoration: none; }
 }
 .brand-mark svg { width: 21px; height: 21px; margin: 6px; fill: none; stroke: var(--cyan); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .brand > strong { font-size: 15px; letter-spacing: -.02em; }
-.main-nav { flex: 1; }
+.main-nav { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #263244 transparent; }
 .nav-label { margin: 0 10px 8px; color: #617083; font: 10px "DM Mono", monospace; letter-spacing: .14em; text-transform: uppercase; }
-.nav-label-spaced { margin-top: 30px; }
+.nav-label-spaced { margin-top: 24px; }
 .nav-link {
   width: 100%;
   display: flex;
@@ -81,6 +81,11 @@ a { color: inherit; text-decoration: none; }
 .nav-link.is-active { background: rgba(66, 216, 239, .09); color: var(--cyan); box-shadow: inset 2px 0 var(--cyan); }
 .nav-link small { margin-left: auto; padding: 2px 7px; border-radius: 99px; background: var(--panel-raised); font: 10px "DM Mono"; }
 .nav-icon { width: 18px; color: currentColor; font-size: 18px; text-align: center; }
+.nav-game-icon { font-size: 14px; }.nav-game-icon.violet { color: var(--violet); }.nav-game-icon.amber { color: var(--amber); }.nav-game-icon.cyan { color: var(--cyan); }
+.sessions-heading { display: flex; align-items: center; justify-content: space-between; margin-top: 24px; }
+.sessions-heading .nav-label { margin-bottom: 0; }
+.session-count { min-width: 20px; margin-right: 8px; padding: 2px 6px; border-radius: 99px; background: var(--panel-raised); color: #8492a3; font: 9px "DM Mono"; text-align: center; }
+.session-list { display: grid; gap: 2px; margin-top: 8px; }
 .session-link { display: flex; align-items: center; gap: 11px; padding: 9px 12px; color: #a4b0bd; border-radius: 10px; }
 .session-link:hover { background: var(--panel); }
 .session-link strong, .session-link small { display: block; }
@@ -146,7 +151,7 @@ a { color: inherit; text-decoration: none; }
 .metrics-strip small { color: #667587; }
 .positive { display: inline-block; width: 5px; height: 5px; margin-right: 5px; border-radius: 50%; background: var(--green); }
 .dashboard-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 22px; align-items: start; }
-.panel { border: 1px solid var(--line-soft); border-radius: var(--radius); background: var(--panel); box-shadow: var(--shadow); }
+.panel { border: 1px solid var(--line-soft); border-radius: 14px; background: var(--panel); box-shadow: 0 12px 36px rgba(0, 0, 0, .18); }
 .library-panel, .activity-panel, .telemetry { padding: 22px; }
 .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 18px; margin-bottom: 17px; }
 .section-heading h2 { margin: 4px 0 0; font-size: 19px; letter-spacing: -.025em; }
@@ -154,9 +159,9 @@ a { color: inherit; text-decoration: none; }
 .section-heading.compact { align-items: center; }
 .live-badge { padding: 4px 7px; border: 1px solid rgba(77, 224, 160, .24); border-radius: 5px; background: rgba(77, 224, 160, .08); color: var(--green); font: 9px "DM Mono"; letter-spacing: .08em; }
 .game-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-.game-card { min-width: 0; overflow: hidden; border: 1px solid var(--line-soft); border-radius: 13px; background: #111a26; transition: transform .2s ease, border-color .2s ease; }
+.game-card { min-width: 0; overflow: hidden; border: 1px solid var(--line-soft); border-radius: 12px; background: #111a26; transition: transform .2s ease, border-color .2s ease; }
 .game-card:hover { transform: translateY(-3px); border-color: rgba(66, 216, 239, .27); }
-.game-visual { position: relative; height: 150px; overflow: hidden; background: #0b111a; }
+.game-visual { position: relative; height: 126px; overflow: hidden; background: #0b111a; }
 .game-visual::after { content: ""; position: absolute; inset: auto 0 0; height: 45%; background: linear-gradient(transparent, #111a26); }
 .game-card.violet .game-visual { background: radial-gradient(circle at 65% 40%, rgba(156, 135, 255, .23), transparent 38%), #0b111a; }
 .game-card.amber .game-visual { background: radial-gradient(circle at 50% 45%, rgba(255, 200, 87, .16), transparent 45%), #0b111a; }
