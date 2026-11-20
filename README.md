@@ -2,6 +2,12 @@
 
 Consola web de videojuegos desarrollada para el curso de **Lenguajes de Programación**. Integra tres juegos orientados a objetos, un oponente inteligente implementado en Prolog, ejecución concurrente de partidas y estadísticas en tiempo real proporcionadas por [GameStats](https://github.com/SebastianVD32/GameStats).
 
+## Acceso y demostración
+
+- [Abrir GameConsole](https://gameconsole-nkx6wjmnfl4di.eastus.cloudapp.azure.com): acceso desde el navegador, sin instalar componentes.
+- [Ver el video demostrativo](https://drive.google.com/file/d/17kTfgxgQDRCX1NYrtCkBt1XXv0sd_4mm/view?usp=sharing).
+- [Guía de instalación y despliegue](deploy/README.md).
+
 ## Juegos
 
 | Juego | Modalidad | Implementación destacada |
@@ -68,7 +74,7 @@ sequence · playerId · type · data
 - Pac-Man registra pastillas, poderes, fantasmas, vidas, niveles y resultado final.
 - Carreras registra vueltas, finalización y abandonos.
 - Los fallos de red no detienen el juego: los eventos pendientes se conservan y se reintentan.
-- El panel `/estadisticas` consulta periódicamente a GameStats y separa métricas generales, por juego y partidas en curso.
+- El panel `/estadisticas` consulta periódicamente a GameStats y separa métricas generales, por juego y partidas en curso. Cada juego incluye además un resumen actualizado cada 2,5 segundos; los resultados finales aparecen después de procesar el cierre.
 
 ## Ejecución con Docker
 
@@ -186,6 +192,15 @@ El workflow `.github/workflows/ci.yml` ejecuta:
 4. Construcción y verificación de una entrega con tres imágenes: GameConsole,
    GameStats Go y GameStats Scala, con una misma etiqueta de versión.
 5. Publicación en GHCR al actualizar `main` (o ejecutar manualmente el workflow en `main`).
+6. Actualización automática de Azure mediante `.github/workflows/deploy-azure.yml`
+   cuando CI/CD termina correctamente en `main`. Comprueba el arranque e intenta
+   recuperar la versión anterior si falla.
+
+La instalación de producción utiliza Ubuntu en Azure East US, una VM
+`Standard_F1as_v7` de 1 CPU y 4 GB de RAM, un disco SSD de 32 GB y Caddy para HTTPS.
+GitHub se autentica con OIDC mediante una identidad limitada a la VM. El servidor
+recibe las imágenes en un paquete temporal, sin guardar credenciales de GitHub.
+Las actualizaciones reinician servicios y pueden interrumpir partidas abiertas.
 
 Para que cualquier persona pueda jugar desde un enlace sin instalar nada, se
 necesita alojamiento para los tres servicios. La configuración de Azure for Students y la
@@ -214,6 +229,7 @@ Esto no requiere que los visitantes tengan cuenta GitHub.
 
 ## Demostración
 
-La demostración debe mostrar los tres juegos, varias partidas concurrentes, las decisiones de Prolog y el panel de GameStats.
+[Ver el video demostrativo en Google Drive](https://drive.google.com/file/d/17kTfgxgQDRCX1NYrtCkBt1XXv0sd_4mm/view?usp=sharing).
 
-> Enlace público del video: **pendiente de agregar antes de la entrega**.
+La demostración del proyecto comprende los tres juegos, partidas concurrentes,
+la inteligencia en Prolog y la integración con el panel de GameStats.
