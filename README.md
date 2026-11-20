@@ -183,7 +183,14 @@ El workflow `.github/workflows/ci.yml` ejecuta:
 1. Pruebas Python dentro de una imagen con SWI-Prolog.
 2. Pruebas JavaScript con Node.js 22.
 3. Integración real con GameStats Go y Scala.
-4. Publicación de `ghcr.io/sebastianvd32/gameconsole` al actualizar `main`.
+4. Construcción y verificación de una entrega con tres imágenes: GameConsole,
+   GameStats Go y GameStats Scala, con una misma etiqueta de versión.
+5. Publicación en GHCR al actualizar `main` (o ejecutar manualmente el workflow en `main`).
+
+Para que cualquier persona pueda jugar desde un enlace sin instalar nada, se
+necesita alojamiento para los tres servicios. La configuración de Azure for Students y la
+alternativa con servidor Docker están en [la guía de despliegue](deploy/README.md).
+Solo la consola se expone a Internet; GameStats permanece en la red privada.
 
 El despliegue usa imágenes publicadas, sin requerir el código fuente:
 
@@ -191,7 +198,10 @@ El despliegue usa imágenes publicadas, sin requerir el código fuente:
 docker compose -f deploy/compose.yaml up -d --wait
 ```
 
-Se pueden seleccionar versiones mediante `GAMECONSOLE_TAG` y `GAMESTATS_VERSION`.
+Selecciona la misma versión de los tres componentes mediante
+`GAMECONSOLE_TAG=sha-<commit completo>`; el valor predeterminado es `latest`.
+Los paquetes privados requieren autenticación del servidor con permisos de lectura.
+Esto no requiere que los visitantes tengan cuenta GitHub.
 
 ## Decisiones técnicas esenciales
 

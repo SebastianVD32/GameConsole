@@ -90,9 +90,9 @@ jobs:
         run: docker compose down --volumes
 
   publish:
-    name: Publicar imagen en GHCR
+    name: Verificar y publicar las tres imágenes en GHCR
     needs: integration
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -101,14 +101,17 @@ jobs:
       - name: Descargar el repositorio
         uses: actions/checkout@v7
 
-      - name: Metadatos de la imagen
-        id: meta
-        uses: docker/metadata-action@v6
+      - name: Descargar la misma revisión de GameStats verificada
+        uses: actions/checkout@v7
         with:
-          images: ghcr.io/${{ github.repository_owner }}/gameconsole
-          tags: |
-            type=sha,format=short
-            type=raw,value=latest
+          repository: SebastianVD32/GameStats
+          ref: ${{ env.GAMESTATS_REF }}
+          path: GameStats
+
+      - name: Configurar Node para verificar las imágenes
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
 
       - name: Iniciar sesión en GHCR
         uses: docker/login-action@v4
@@ -117,11 +120,58 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Construir y publicar
-        uses: docker/build-push-action@v7
+      - name: Construir las tres imágenes de la entrega
+        env:
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          echo "IMAGE_OWNER=${OWNER,,}" >> "$GITHUB_ENV"
+          echo "GAMECONSOLE_TAG=sha-$GITHUB_SHA" >> "$GITHUB_ENV"
+          prefix="ghcr.io/${OWNER,,}"
+          docker build --target runtime --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" --label "org.opencontainers.image.revision=$GITHUB_SHA" -t "$prefix/gameconsole:sha-$GITHUB_SHA" .
+          docker build --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" --label "org.opencontainers.image.revision=$GAMESTATS_REF" -t "$prefix/gameconsole-gamestats-go:sha-$GITHUB_SHA" GameStats/go-ingestion
+          docker build --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" --label "org.opencontainers.image.revision=$GAMESTATS_REF" -t "$prefix/gameconsole-gamestats-scala:sha-$GITHUB_SHA" GameStats/scala-analytics
+
+      - name: Probar la entrega sin código fuente
+        env:
+          VERIFY_SCALA: "1"
+        run: |
+          docker compose -f deploy/compose.yaml -f deploy/verify.compose.yaml up --pull never --wait --wait-timeout 180 -d
+          python3 scripts/smoke_test.py http://127.0.0.1:5000 --matches 4 --moves 6
+          node tests/racing.integration.cjs
+          node tests/gamestats.integration.cjs
+
+      - name: Publicar versiones verificadas y luego actualizar latest
+        run: |
+          for image in gameconsole gameconsole-gamestats-go gameconsole-gamestats-scala; do
+            docker push "ghcr.io/$IMAGE_OWNER/$image:$GAMECONSOLE_TAG"
+          done
+          for image in gameconsole gameconsole-gamestats-go gameconsole-gamestats-scala; do
+            docker tag "ghcr.io/$IMAGE_OWNER/$image:$GAMECONSOLE_TAG" "ghcr.io/$IMAGE_OWNER/$image:latest"
+            docker push "ghcr.io/$IMAGE_OWNER/$image:latest"
+          done
+          {
+            echo "## Entrega verificada"
+            echo "Versión conjunta: $GAMECONSOLE_TAG"
+            echo 'Las tres imágenes se probaron juntas. Los paquetes conservan el acceso de GitHub; los jugadores solo necesitan el enlace del alojamiento.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Preparar archivos para el servidor Azure
+        run: |
+          mkdir -p delivery
+          cp -R deploy/. delivery/
+          printf 'GAMECONSOLE_TAG=%s\nIMAGE_OWNER=%s\n' "$GAMECONSOLE_TAG" "$IMAGE_OWNER" > delivery/version.env
+
+      - name: Guardar paquete de despliegue
+        uses: actions/upload-artifact@v7
         with:
-          context: .
-          target: runtime
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          name: gameconsole-deploy-${{ github.sha }}
+          path: delivery/
+          if-no-files-found: error
+
+      - name: Registros del despliegue
+        if: failure()
+        run: docker compose -f deploy/compose.yaml -f deploy/verify.compose.yaml logs --no-color
+
+      - name: Detener entorno de publicación
+        if: always()
+        run: docker compose -f deploy/compose.yaml -f deploy/verify.compose.yaml down --volumes

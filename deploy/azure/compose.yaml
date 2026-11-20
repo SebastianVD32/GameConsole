@@ -1,0 +1,21 @@
+# Combinar con deploy/compose.yaml. Solo el proxy recibe tráfico público.
+services:
+  proxy:
+    image: caddy:2
+    restart: unless-stopped
+    environment:
+      GAMECONSOLE_DOMAIN: ${GAMECONSOLE_DOMAIN:?Define el nombre DNS público de Azure}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./azure/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      console:
+        condition: service_healthy
+
+volumes:
+  caddy-data:
+  caddy-config:
