@@ -24,27 +24,38 @@
       </a>
 
       <nav class="main-nav" aria-label="Navegación principal">
-        <p class="nav-label">Consola</p>
+        <p class="nav-label">General</p>
         <a class="nav-link {{ 'is-active' if page == 'dashboard' else '' }}" href="{{ url_for('web.dashboard') }}">
           <span class="nav-icon">⌂</span><span>Resumen</span>
-        </a>
-        <a class="nav-link {{ 'is-active' if page == 'games' else '' }}" href="{{ url_for('web.game', game_id='ajedrez') }}">
-          <span class="nav-icon">◇</span><span>Ajedrez</span><small>IA</small>
         </a>
         <a class="nav-link {{ 'is-active' if page == 'stats' else '' }}" href="{{ url_for('web.statistics') }}">
           <span class="nav-icon">⌁</span><span>Estadísticas</span><small>GameStats</small>
         </a>
 
-        <p class="nav-label nav-label-spaced">Partidas activas</p>
-        {% for item in active_sessions %}
-          {% set meta = games[item.slug] %}
-            <a class="session-link" href="{{ url_for('web.statistics') ~ '#partidas-en-curso' if item.arcade else url_for('web.game', game_id=item.slug) ~ '?partida=' ~ item.matchId }}">
-            <span class="session-dot {{ meta.accent }}"></span>
-            <span><strong>{{ meta.short_name }}</strong><small>{{ item.matchId[:14] }} · {{ item.status }}</small></span>
-          </a>
-        {% else %}
-          <p class="session-empty">Sin partidas en curso</p>
+        <p class="nav-label nav-label-spaced">Juegos</p>
+        {% for id, game in games.items() %}
+        <a class="nav-link {{ 'is-active' if page == 'games' and game_id == id else '' }}" href="{{ url_for('web.game', game_id=id) }}">
+          <span class="nav-icon nav-game-icon {{ game.accent }}">{{ game.icon }}</span>
+          <span>{{ game.short_name }}</span>
+          {% if id == 'ajedrez' %}<small>IA</small>{% endif %}
+        </a>
         {% endfor %}
+
+        <div class="sessions-heading">
+          <p class="nav-label">Partidas activas</p>
+          <span class="session-count" data-active-count>{{ active_sessions|length }}</span>
+        </div>
+        <div class="session-list" data-active-sessions data-variant="sidebar" aria-live="polite">
+          {% for item in active_sessions %}
+            {% set meta = games[item.slug] %}
+            <a class="session-link" href="{{ url_for('web.statistics') ~ '#partidas-en-curso' if item.arcade else url_for('web.game', game_id=item.slug) ~ '?partida=' ~ item.matchId }}">
+              <span class="session-dot {{ meta.accent }}"></span>
+              <span><strong>{{ meta.short_name }}</strong><small>{{ item.matchId[:14] }} · {{ item.status }}</small></span>
+            </a>
+          {% else %}
+            <p class="session-empty">Sin partidas en curso</p>
+          {% endfor %}
+        </div>
       </nav>
 
     </aside>

@@ -39,6 +39,14 @@ class PagesTest(unittest.TestCase):
         html = self.client.get("/").get_data(as_text=True)
         for name in ("Ajedrez", "Pac-Man", "Juego de carreras"):
             self.assertIn(name, html)
+        for path in ("/juegos/ajedrez", "/juegos/pacman", "/juegos/carreras"):
+            self.assertIn(f'href="{path}"', html)
+        self.assertIn('data-active-sessions', html)
+
+    def test_menu_marks_only_the_selected_game(self):
+        html = self.client.get("/juegos/pacman").get_data(as_text=True)
+        self.assertIn('class="nav-link is-active" href="/juegos/pacman"', html)
+        self.assertNotIn('class="nav-link is-active" href="/juegos/ajedrez"', html)
 
     def test_each_game_and_stats_page_loads(self):
         for path in ("/juegos/ajedrez", "/juegos/pacman", "/juegos/carreras", "/estadisticas"):
