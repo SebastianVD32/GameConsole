@@ -4,6 +4,20 @@ Los jugadores solo necesitan abrir la URL HTTPS de GameConsole. El administrador
 configura el alojamiento una vez; los visitantes no instalan Docker, Python ni Prolog.
 GitHub conserva el código y las imágenes, pero no ejecuta estos tres servidores.
 
+## Producción
+
+- Aplicación: [GameConsole](https://gameconsole-nkx6wjmnfl4di.eastus.cloudapp.azure.com).
+- Video: [demostración en Google Drive](https://drive.google.com/file/d/17kTfgxgQDRCX1NYrtCkBt1XXv0sd_4mm/view?usp=sharing).
+- Azure: grupo `rg-gameconsole`, VM `gameconsole`, región East US.
+- Máquina instalada: `Standard_F1as_v7`, 1 CPU, 4 GB RAM y SSD de 32 GB.
+- Versión verificada el 20 de noviembre de 2026:
+  `75d9bf70f08f8c0639f1f44ad25c86187d6db3ef`.
+- [Despliegue automático verificado](https://github.com/SebastianVD32/GameConsole/actions/runs/44820870018).
+
+Cada despliegue posterior instala la etiqueta SHA del commit verificado por CI.
+La versión vigente se consulta en GitHub Actions, entorno `production`, y en
+`GAMECONSOLE_TAG` del archivo `/opt/gameconsole/deploy/.env` del servidor.
+
 ## Entrega desde GitHub
 
 El workflow de `main` prueba Python, Prolog, JavaScript y la integración con
@@ -34,9 +48,10 @@ no es necesario comprar un dominio. Solo se publican los puertos 80 y 443.
 El puerto SSH se limita a la IP del administrador. Go y Scala permanecen privados.
 
 `azure/main.bicep` define VM, disco SSD de 32 GB, red, firewall e IP pública.
-`azure/cloud-init.yaml` instala Docker y Compose. El tamaño inicial propuesto es
-`Standard_B2als_v2` (2 CPU, 4 GB); comprobar cuota, disponibilidad y costo en la región
-antes de crear recursos. Azure Students puede aplicar el crédito disponible,
+`azure/cloud-init.yaml` instala Docker y Compose. La plantilla conserva como valor
+predeterminado `Standard_B2als_v2`; para reproducir la instalación actual se debe
+pasar `vmSize=Standard_F1as_v7`, como en el comando siguiente. Comprobar cuota,
+disponibilidad y costo antes de crear recursos. Azure Students puede aplicar el crédito disponible,
 pero el servicio consume recursos mientras está encendido. Revisar el saldo en
 [Azure Education Hub](https://portal.azure.com/#view/Microsoft_Azure_Education/EducationMenuBlade/~/overview).
 
@@ -50,7 +65,7 @@ $region = 'eastus' # Cambiar por la región con cuota y disponibilidad verificad
 $publicKey = Get-Content "$env:USERPROFILE/.ssh/gameconsole.pub" -Raw
 $adminCidr = 'IP_PUBLICA_DEL_ADMIN/32'
 az group create --name $group --location $region
-az deployment group create --resource-group $group --template-file deploy/azure/main.bicep --parameters sshPublicKey="$publicKey" adminCidr="$adminCidr"
+az deployment group create --resource-group $group --template-file deploy/azure/main.bicep --parameters vmSize=Standard_F1as_v7 sshPublicKey="$publicKey" adminCidr="$adminCidr"
 az deployment group show --resource-group $group --name main --query properties.outputs -o json
 ```
 
@@ -86,11 +101,27 @@ La URL pública será `https://NOMBRE_DNS_DEVUELTO_POR_AZURE`.
 
 ## Actualizaciones y costos
 
-GitHub publica las imágenes comprobadas. Para actualizar Azure, descargar las tres
-con la misma etiqueta SHA, cambiar `GAMECONSOLE_TAG` en `.env` y volver a ejecutar
-Compose. El workflow `Deploy Azure` actualiza la aplicación automáticamente después de que CI/CD termine correctamente en `main`. Usa OIDC con la identidad `gameconsole-github-deploy`, limitada a ejecutar comandos en la VM. Transfiere un paquete temporal con las tres imágenes, espera la salud de Compose y recupera la versión anterior si falla. No crea nuevas máquinas ni cambia su tamaño.
-Esto permite aplicar las actualizaciones cuando no haya partidas en curso.
-Para volver a una versión anterior, seleccionar su etiqueta SHA y ejecutar Compose.
+El workflow `Deploy Azure` actualiza la aplicación automáticamente después de
+que CI/CD termine correctamente en `main`. No despliega los pull requests.
+Usa OIDC con la identidad `gameconsole-github-deploy`, limitada a consultar y
+ ejecutar comandos en la VM. Transfiere un paquete temporal con las tres imágenes,
+serializa las actualizaciones, espera la salud de Compose y comprueba el acceso HTTPS.
+Si falla, intenta recuperar la configuración y las imágenes de la versión anterior.
+No crea nuevas máquinas ni cambia su tamaño.
+
+La identidad federada, su rol limitado y las variables `AZURE_CLIENT_ID`,
+`AZURE_TENANT_ID` y `AZURE_SUBSCRIPTION_ID` ya están configuradas para este repositorio.
+Una instalación en otra cuenta debe configurar su propia identidad OIDC y concederle
+el acceso a su VM; no se deben copiar claves ni contraseñas al código.
+
+Las actualizaciones reinician los servicios. Integrar cambios en `main` cuando no
+haya partidas ni demostraciones en curso. Para una recuperación manual, cargar
+las tres imágenes de una versión anterior, seleccionar su etiqueta SHA en `.env`
+y ejecutar Compose; no eliminar los volúmenes.
+
+El grupo tiene un presupuesto mensual de USD 60 con alertas. Las alertas no
+apagan la VM ni constituyen un límite de gasto. El consumo depende del tiempo
+encendido, el tráfico, las operaciones y los demás recursos de la cuenta.
 
 Para detener el cómputo sin borrar datos:
 
@@ -134,5 +165,5 @@ La consola se publica solo en `127.0.0.1:5000`. El administrador debe colocar un
 proxy HTTPS delante para obtener una URL pública. No publicar los puertos de
 GameStats. `verify.compose.yaml` expone sus puertos únicamente para pruebas locales.
 
-Este archivo describe la configuración; no acredita por sí solo un despliegue.
-Registrar aquí la URL final y la versión una vez comprobadas en el alojamiento.
+La URL de producción y la ejecución verificada figuran al inicio de esta guía.
+La versión actual puede cambiar con cada actualización aprobada en `main`.
